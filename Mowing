@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Textarea } from "@/components/ui/textarea";
 
-// TRUE PRO-LEVEL SMART PRICING SETUP // Requires: // 1. Google Maps API (places, geometry, drawing) // 2. User draws lawn area (MOST ACCURATE METHOD)
+// AUTO-DETECT LAWN (NO DRAWING) // Uses Google Maps + approximation (can upgrade to real satellite APIs later)
 
 export default function LawnApp() { const [form, setForm] = useState({ name: "", phone: "", address: "", service: "Mowing", notes: "", });
 
-const [map, setMap] = useState(null); const [drawingManager, setDrawingManager] = useState(null); const [lawnSqFt, setLawnSqFt] = useState(null); const [price, setPrice] = useState(null);
+const [sqft, setSqft] = useState(null); const [price, setPrice] = useState(null);
 
-const mapRef = useRef(null); const addressRef = useRef(null);
+const addressRef = useRef(null);
 
 const calculatePrice = (sqft, service) => { if (!sqft) return 40;
 
-let base = sqft * 0.015; // better realistic rate
+let base = sqft * 0.012; // slightly lower since estimate includes non-grass
 
 if (base < 40) base = 40;
 
@@ -24,68 +24,52 @@ return Math.round(base);
 
 useEffect(() => { if (!window.google) return;
 
-const mapInstance = new window.google.maps.Map(mapRef.current, {
-  center: { lat: 37.05, lng: -93.3 },
-  zoom: 15,
-});
-
-const drawManager = new window.google.maps.drawing.DrawingManager({
-  drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
-  drawingControl: true,
-  drawingControlOptions: {
-    position: window.google.maps.ControlPosition.TOP_CENTER,
-    drawingModes: ["polygon"],
-  },
-});
-
-drawManager.setMap(mapInstance);
-
-window.google.maps.event.addListener(drawManager, "overlaycomplete", (event) => {
-  const polygon = event.overlay;
-
-  const area = window.google.maps.geometry.spherical.computeArea(
-    polygon.getPath()
-  );
-
-  const sqft = area * 10.764; // convert m² to sq ft
-
-  setLawnSqFt(Math.round(sqft));
-
-  const newPrice = calculatePrice(sqft, form.service);
-  setPrice(newPrice);
-});
-
-setMap(mapInstance);
-setDrawingManager(drawManager);
-
 const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current);
 
 autocomplete.addListener("place_changed", () => {
   const place = autocomplete.getPlace();
-  if (!place.geometry) return;
 
-  mapInstance.setCenter(place.geometry.location);
-  mapInstance.setZoom(18);
+  if (!place.geometry || !place.geometry.viewport) return;
+
+  const bounds = place.geometry.viewport;
+  const ne = bounds.getNorthEast();
+  const sw = bounds.getSouthWest();
+
+  const latDiff = Math.abs(ne.lat() - sw.lat());
+  const lngDiff = Math.abs(ne.lng() - sw.lng());
+
+  // Estimate total lot size
+  let totalSqFt = latDiff * lngDiff * 3.587e10;
+
+  // Estimate lawn portion (remove house/driveway ~40%)
+  let lawnSqFt = totalSqFt * 0.6;
+
+  lawnSqFt = Math.round(lawnSqFt);
+
+  setSqft(lawnSqFt);
+
+  const newPrice = calculatePrice(lawnSqFt, form.service);
+  setPrice(newPrice);
 });
 
 }, []);
 
 const handleChange = (e) => { const updated = { ...form, [e.target.name]: e.target.value }; setForm(updated);
 
-if (lawnSqFt) {
-  const newPrice = calculatePrice(lawnSqFt, updated.service);
+if (sqft) {
+  const newPrice = calculatePrice(sqft, updated.service);
   setPrice(newPrice);
 }
 
 };
 
-const handleSubmit = (e) => { e.preventDefault(); alert(Quote submitted! Estimated price: $${price || 40}); console.log({ ...form, lawnSqFt, price }); };
+const handleSubmit = (e) => { e.preventDefault(); alert(Quote submitted! Estimated price: $${price || 40}); };
 
 return ( <div className="p-6 grid gap-6 max-w-xl mx-auto"> <h1 className="text-3xl font-bold text-center"> Fresh Cut Fields and McLees </h1> <p className="text-center">Call or Text: 417-499-1916</p>
 
 <Card className="rounded-2xl shadow">
     <CardContent className="p-4">
-      <h2 className="text-xl mb-4">Request a Quote</h2>
+      <h2 className="text-xl mb-4">Instant Quote</h2>
 
       <form onSubmit={handleSubmit} className="grid gap-3">
         <Input name="name" placeholder="Full Name" onChange={handleChange} required />
@@ -98,18 +82,8 @@ return ( <div className="p-6 grid gap-6 max-w-xl mx-auto"> <h1 className="text-3
           required
         />
 
-        <div
-          ref={mapRef}
-          style={{ height: "300px", width: "100%" }}
-          className="rounded"
-        />
-
-        <p className="text-sm">
-          Draw around your lawn area for exact pricing
-        </p>
-
-        {lawnSqFt && (
-          <p className="text-sm">Lawn Size: {lawnSqFt.toLocaleString()} sq ft</p>
+        {sqft && (
+          <p className="text-sm">Estimated Lawn Size: {sqft.toLocaleString()} sq ft</p>
         )}
 
         {price && (
@@ -125,7 +99,7 @@ return ( <div className="p-6 grid gap-6 max-w-xl mx-auto"> <h1 className="text-3
 
         <Textarea name="notes" placeholder="Additional details" onChange={handleChange} />
 
-        <Button type="submit">Get Exact Quote</Button>
+        <Button type="submit">Get Instant Quote</Button>
       </form>
     </CardContent>
   </Card>
