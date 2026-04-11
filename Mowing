@@ -1,134 +1,162 @@
-import React, { useState, useEffect, useRef } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useEffect, useRef } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-// TRUE PRO-LEVEL SMART PRICING SETUP // Requires: // 1. Google Maps API (places, geometry, drawing) // 2. User draws lawn area (MOST ACCURATE METHOD)
+// TRUE PRO-LEVEL SMART PRICING SETUP
+// Requires:
+// 1. Google Maps API (places, geometry, drawing)
+// 2. User draws lawn area (MOST ACCURATE METHOD)
 
-export default function LawnApp() { const [form, setForm] = useState({ name: "", phone: "", address: "", service: "Mowing", notes: "", });
+export default function LawnApp() {
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    service: "Mowing",
+    notes: "",
+  });
 
-const [map, setMap] = useState(null); const [drawingManager, setDrawingManager] = useState(null); const [lawnSqFt, setLawnSqFt] = useState(null); const [price, setPrice] = useState(null);
+  const [map, setMap] = useState(null);
+  const [drawingManager, setDrawingManager] = useState(null);
+  const [lawnSqFt, setLawnSqFt] = useState(null);
+  const [price, setPrice] = useState(null);
 
-const mapRef = useRef(null); const addressRef = useRef(null);
+  const mapRef = useRef(null);
+  const addressRef = useRef(null);
 
-const calculatePrice = (sqft, service) => { if (!sqft) return 40;
+  const calculatePrice = (sqft, service) => {
+    if (!sqft) return 40;
 
-let base = sqft * 0.015; // better realistic rate
+    let base = sqft * 0.015; // better realistic rate
 
-if (base < 40) base = 40;
+    if (base < 40) base = 40;
 
-if (service === "Gutter Cleaning") base += 75;
-if (service === "Landscaping") base += 100;
-if (service === "Limb Pick Up") base += 50;
+    if (service === "Gutter Cleaning") base += 75;
+    if (service === "Landscaping") base += 100;
+    if (service === "Limb Pick Up") base += 50;
 
-return Math.round(base);
+    return Math.round(base);
+  };
 
-};
+  useEffect(() => {
+    if (!window.google) return;
 
-useEffect(() => { if (!window.google) return;
+    const mapInstance = new window.google.maps.Map(mapRef.current, {
+      center: { lat: 37.05, lng: -93.3 },
+      zoom: 15,
+    });
 
-const mapInstance = new window.google.maps.Map(mapRef.current, {
-  center: { lat: 37.05, lng: -93.3 },
-  zoom: 15,
-});
+    const drawManager = new window.google.maps.drawing.DrawingManager({
+      drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
+      drawingControl: true,
+      drawingControlOptions: {
+        position: window.google.maps.ControlPosition.TOP_CENTER,
+        drawingModes: ["polygon"],
+      },
+    });
 
-const drawManager = new window.google.maps.drawing.DrawingManager({
-  drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
-  drawingControl: true,
-  drawingControlOptions: {
-    position: window.google.maps.ControlPosition.TOP_CENTER,
-    drawingModes: ["polygon"],
-  },
-});
+    drawManager.setMap(mapInstance);
 
-drawManager.setMap(mapInstance);
+    window.google.maps.event.addListener(drawManager, "overlaycomplete", (event) => {
+      const polygon = event.overlay;
 
-window.google.maps.event.addListener(drawManager, "overlaycomplete", (event) => {
-  const polygon = event.overlay;
+      const area = window.google.maps.geometry.spherical.computeArea(
+        polygon.getPath()
+      );
 
-  const area = window.google.maps.geometry.spherical.computeArea(
-    polygon.getPath()
+      const sqft = area * 10.764; // convert m² to sq ft
+
+      setLawnSqFt(Math.round(sqft));
+
+      const newPrice = calculatePrice(sqft, form.service);
+      setPrice(newPrice);
+    });
+
+    setMap(mapInstance);
+    setDrawingManager(drawManager);
+
+    const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current);
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) return;
+
+      mapInstance.setCenter(place.geometry.location);
+      mapInstance.setZoom(18);
+    });
+  }, []);
+
+  const handleChange = (e) => {
+    const updated = { ...form, [e.target.name]: e.target.value };
+    setForm(updated);
+
+    if (lawnSqFt) {
+      const newPrice = calculatePrice(lawnSqFt, updated.service);
+      setPrice(newPrice);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert(`Quote submitted! Estimated price: $${price || 40}`);
+    console.log({ ...form, lawnSqFt, price });
+  };
+
+  return (
+    <div className="p-6 grid gap-6 max-w-xl mx-auto">
+      <h1 className="text-3xl font-bold text-center">
+        Fresh Cut Fields and McLees
+      </h1>
+      <p className="text-center">Call or Text: 417-499-1916</p>
+
+      <Card className="rounded-2xl shadow">
+        <CardContent className="p-4">
+          <h2 className="text-xl mb-4">Request a Quote</h2>
+
+          <form onSubmit={handleSubmit} className="grid gap-3">
+            <Input name="name" placeholder="Full Name" onChange={handleChange} required />
+            <Input name="phone" placeholder="Phone Number" onChange={handleChange} required />
+
+            <input
+              ref={addressRef}
+              placeholder="Enter your address"
+              className="border p-2 rounded"
+              required
+            />
+
+            <div
+              ref={mapRef}
+              style={{ height: "300px", width: "100%" }}
+              className="rounded"
+            />
+
+            <p className="text-sm">
+              Draw around your lawn area for exact pricing
+            </p>
+
+            {lawnSqFt && (
+              <p className="text-sm">Lawn Size: {lawnSqFt.toLocaleString()} sq ft</p>
+            )}
+
+            {price && (
+              <p className="text-lg font-semibold">Estimated Price: ${price}</p>
+            )}
+
+            <select name="service" className="border p-2 rounded" onChange={handleChange}>
+              <option>Mowing</option>
+              <option>Limb Pick Up</option>
+              <option>Gutter Cleaning</option>
+              <option>Landscaping</option>
+            </select>
+
+            <Textarea name="notes" placeholder="Additional details" onChange={handleChange} />
+
+            <Button type="submit">Get Exact Quote</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
-
-  const sqft = area * 10.764; // convert m² to sq ft
-
-  setLawnSqFt(Math.round(sqft));
-
-  const newPrice = calculatePrice(sqft, form.service);
-  setPrice(newPrice);
-});
-
-setMap(mapInstance);
-setDrawingManager(drawManager);
-
-const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current);
-
-autocomplete.addListener("place_changed", () => {
-  const place = autocomplete.getPlace();
-  if (!place.geometry) return;
-
-  mapInstance.setCenter(place.geometry.location);
-  mapInstance.setZoom(18);
-});
-
-}, []);
-
-const handleChange = (e) => { const updated = { ...form, [e.target.name]: e.target.value }; setForm(updated);
-
-if (lawnSqFt) {
-  const newPrice = calculatePrice(lawnSqFt, updated.service);
-  setPrice(newPrice);
 }
-
-};
-
-const handleSubmit = (e) => { e.preventDefault(); alert(Quote submitted! Estimated price: $${price || 40}); console.log({ ...form, lawnSqFt, price }); };
-
-return ( <div className="p-6 grid gap-6 max-w-xl mx-auto"> <h1 className="text-3xl font-bold text-center"> Fresh Cut Fields and McLees </h1> <p className="text-center">Call or Text: 417-499-1916</p>
-
-<Card className="rounded-2xl shadow">
-    <CardContent className="p-4">
-      <h2 className="text-xl mb-4">Request a Quote</h2>
-
-      <form onSubmit={handleSubmit} className="grid gap-3">
-        <Input name="name" placeholder="Full Name" onChange={handleChange} required />
-        <Input name="phone" placeholder="Phone Number" onChange={handleChange} required />
-
-        <input
-          ref={addressRef}
-          placeholder="Enter your address"
-          className="border p-2 rounded"
-          required
-        />
-
-        <div
-          ref={mapRef}
-          style={{ height: "300px", width: "100%" }}
-          className="rounded"
-        />
-
-        <p className="text-sm">
-          Draw around your lawn area for exact pricing
-        </p>
-
-        {lawnSqFt && (
-          <p className="text-sm">Lawn Size: {lawnSqFt.toLocaleString()} sq ft</p>
-        )}
-
-        {price && (
-          <p className="text-lg font-semibold">Estimated Price: ${price}</p>
-        )}
-
-        <select name="service" className="border p-2 rounded" onChange={handleChange}>
-          <option>Mowing</option>
-          <option>Limb Pick Up</option>
-          <option>Gutter Cleaning</option>
-          <option>Landscaping</option>
-        </select>
-
-        <Textarea name="notes" placeholder="Additional details" onChange={handleChange} />
-
-        <Button type="submit">Get Exact Quote</Button>
-      </form>
-    </CardContent>
-  </Card>
-</div>
-
-); }
