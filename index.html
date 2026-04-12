@@ -88,35 +88,38 @@
 
 <div class="logo-container">
     <img src="IMG_20260325_165435.jpg" alt="Fresh Cut Fields & McLees Logo" class="logo-img">
-    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">Call/Text: 417-499-1916</p>
+    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">417-499-1916</p>
 </div>
 
 <div class="card">
     <h2 class="card-title">Free Instant Quote</h2>
     
-    <form id="quoteForm">
-        <input type="text" id="userName" placeholder="Your Name" required>
-        <input type="text" id="autocomplete" placeholder="Enter Property Address..." required autocomplete="off">
+    <form action="https://getform.io/f/m56kua56s1k" method="POST">
+        <input type="hidden" name="_next" value="https://forminit.com/thank-you">
+        
+        <input type="text" name="customer_name" placeholder="Your Name" required>
+        <input type="text" id="autocomplete" name="address" placeholder="Enter Property Address..." required autocomplete="off">
         
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
+            <input type="hidden" name="quoted_price" id="hiddenPrice">
         </div>
 
-        <select id="service">
+        <select name="service_frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="BiWeekly">Bi-Weekly Mowing</option>
         </select>
 
         <label>Add-On Services</label>
         <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="35"> Tick & Flea Granules (+$35)</label>
-            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="30"> Perimeter Bug Spray (+$30)</label>
-            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
+            <label class="checkbox-item"><input type="checkbox" name="pest_control" class="addon" data-price="35"> Tick & Flea Granules (+$35)</label>
+            <label class="checkbox-item"><input type="checkbox" name="bug_spray" class="addon" data-price="30"> Perimeter Bug Spray (+$30)</label>
+            <label class="checkbox-item"><input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
         </div>
         
-        <textarea id="notes" placeholder="Additional Notes (Gates, Pets, etc.)"></textarea>
-        <button type="submit">Get Instant Quote</button>
+        <textarea name="customer_notes" placeholder="Additional Notes (Gates, Pets, etc.)"></textarea>
+        <button type="submit">Submit Quote Request</button>
     </form>
 </div>
 
@@ -145,7 +148,6 @@
             const widthFt = Math.abs(bounds.getNorthEast().lng() - bounds.getSouthWest().lng()) * mPerDegLng * 3.28084;
             const heightFt = Math.abs(bounds.getNorthEast().lat() - bounds.getSouthWest().lat()) * mPerDegLat * 3.28084;
 
-            // Updated area calculation for accuracy
             let estimatedGrass = Math.round((widthFt * heightFt / 4.8) * 0.45);
 
             if (estimatedGrass > 20000) window.currentSqFt = 16000;
@@ -164,19 +166,19 @@
         if (price < MINIMUM_PRICE) price = MINIMUM_PRICE;
 
         let addons = 0;
-        document.querySelectorAll('.addon:checked').forEach(box => addons += parseFloat(box.getAttribute('data-price')));
+        document.querySelectorAll('.addon:checked').forEach(box => {
+            addons += parseFloat(box.getAttribute('data-price'));
+        });
 
+        const total = Math.round(price + addons);
         document.getElementById('priceBox').style.display = 'block';
         document.getElementById('sqftLabel').innerText = "Est. Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
-        document.getElementById('priceLabel').innerText = "$" + Math.round(price + addons);
+        document.getElementById('priceLabel').innerText = "$" + total;
+        document.getElementById('hiddenPrice').value = "$" + total;
     }
 
     document.getElementById('service').addEventListener('change', updatePrice);
     document.querySelectorAll('.addon').forEach(item => item.addEventListener('change', updatePrice));
-    document.getElementById('quoteForm').addEventListener('submit', (e) => { 
-        e.preventDefault(); 
-        alert("Request Sent! We'll contact you shortly."); 
-    });
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
