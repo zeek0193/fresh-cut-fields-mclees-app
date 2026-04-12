@@ -16,8 +16,8 @@
     .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
     .addon-item input { width: 22px; height: 22px; margin-right: 10px; cursor: pointer; }
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
-    .btn-text { background: #5d4037; border-color: #d4af37; }
-    .trap { display: none !important; }
+    .btn-text { background: #5d4037; border-color: #d4af37; margin-top: 8px; }
+    .trap { display: none !important; visibility: hidden; }
 </style>
 </head>
 <body>
@@ -30,26 +30,26 @@
 <div class="card">
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
 
-        <label>Name</label>
+        <label>Full Name</label>
         <input type="text" name="customer_name" required>
 
-        <label>Phone</label>
+        <label>Phone Number</label>
         <input type="tel" name="customer_phone" required>
 
-        <label>Address</label>
+        <label>Service Address</label>
         <input type="text" id="autocomplete" name="service_address" required>
 
-        <input type="text" name="confirm_email" class="trap" tabindex="-1" autocomplete="off">
+        <input type="text" name="_gotcha" class="trap" tabindex="-1" autocomplete="off">
 
         <div id="priceBox" class="price-box">
-            <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SATELLITE SCANNING...</div>
+            <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SCANNING...</div>
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
             
-            <input type="hidden" name="final_quote" id="hiddenPrice">
-            <input type="hidden" name="detected_sqft" id="hiddenSqft">
+            <input type="hidden" name="quote_total_price" id="hiddenPrice">
+            <input type="hidden" name="detected_lawn_sqft" id="hiddenSqft">
         </div>
 
-        <label>Frequency</label>
+        <label>Mowing Frequency</label>
         <select id="service" name="mowing_frequency">
             <option value="Weekly">Weekly</option>
             <option value="Bi-Weekly">Bi-Weekly</option>
@@ -62,7 +62,7 @@
             <div class="addon-item"><input type="checkbox" class="addon" name="bug_spray" data-price="30"><span>Bug Spray (+$30)</span></div>
         </div>
 
-        <button type="submit" id="submitBtn" disabled>Enter Address First</button>
+        <button type="submit" id="submitBtn" disabled>Enter Address to Start</button>
         <button type="button" class="btn-text" onclick="sendText()">Text Me This Quote</button>
     </form>
 </div>
@@ -97,12 +97,13 @@ function analyze(lat,lng){
         const data = ctx.getImageData(0,0,300,300).data;
         let grass=0;
         for(let i=0;i<data.length;i+=4){
+            // Joplin-optimized green detection
             if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70) grass++;
         }
         window.sqft = Math.round(Math.max(3000, Math.min(20000, grass * 0.35)));
         update();
         document.getElementById("submitBtn").disabled = false;
-        document.getElementById("submitBtn").innerText = "Submit Quote";
+        document.getElementById("submitBtn").innerText = "Submit Quote Request";
     };
 }
 
@@ -112,8 +113,11 @@ function update(){
     if(document.getElementById("service").value==="Bi-Weekly") price *= 1.25;
     document.querySelectorAll(".addon:checked").forEach(a=> price += parseFloat(a.dataset.price));
     price = Math.round(price);
+    
     document.getElementById("sqftText").innerText = "Est Lawn: " + window.sqft.toLocaleString() + " sq ft";
     document.getElementById("priceLabel").innerText = "$" + price;
+    
+    // FORCING data into hidden fields
     document.getElementById("hiddenPrice").value = "$" + price;
     document.getElementById("hiddenSqft").value = window.sqft + " sqft";
     window.price = price;
@@ -123,10 +127,18 @@ document.getElementById("service").onchange = update;
 document.querySelectorAll(".addon").forEach(a=>a.onchange=update);
 
 function sendText(){
-    if(!window.price) return alert("Enter address first");
+    if(!window.price) return alert("Select an address first.");
     const msg = `Fresh Cut Fields Quote:\n${document.getElementById("autocomplete").value}\nLawn: ${window.sqft}sqft\nTotal: $${window.price}`;
     window.location.href = `sms:4174991916?body=${encodeURIComponent(msg)}`;
 }
+
+// FINAL CHECK BEFORE SENDING
+document.getElementById('mainForm').onsubmit = function() {
+    if (!document.getElementById("hiddenPrice").value) {
+        alert("Wait for the satellite scan to finish before submitting.");
+        return false;
+    }
+};
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
 </body>
