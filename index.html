@@ -11,7 +11,6 @@
         p.phone { text-align: center; color: #666; margin-bottom: 25px; font-size: 14px; }
         label { display: block; margin-top: 15px; font-size: 12px; font-weight: bold; color: #444; text-transform: uppercase; }
         input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: #2d5a27; outline: none; box-shadow: 0 0 0 2px rgba(45,90,39,0.1); }
         .price-box { background: #e8f5e9; padding: 20px; border-radius: 15px; text-align: center; display: none; margin: 15px 0; border: 1px solid #c8e6c9; }
         .price-box p { margin: 0; color: #2e7d32; font-size: 14px; }
         .price-box h2 { margin: 5px 0; color: #1b5e20; font-size: 32px; }
@@ -36,7 +35,7 @@
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
-            <p class="disclaimer">*Estimate based on satellite data. Final price verified on-site.</p>
+            <p class="disclaimer">*Automated estimate for lawn areas only. Includes house/driveway deduction. Final price verified on-site.</p>
         </div>
 
         <label>Service Type</label>
@@ -44,12 +43,9 @@
             <option value="Mowing">Standard Mowing</option>
             <option value="Limb Pick Up">Limb Pick Up (+ $50)</option>
             <option value="Gutter Cleaning">Gutter Cleaning (+ $75)</option>
-            <option value="Landscaping">Landscaping (+ $100)</option>
         </select>
         
-        <label>Notes</label>
         <textarea id="notes" placeholder="Gate codes, pets, or specific requests..."></textarea>
-        
         <button type="submit">Get Instant Quote</button>
     </form>
 </div>
@@ -59,37 +55,35 @@
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
-        const options = {
-            types: ['address'],
-            componentRestrictions: { country: "us" }
-        };
-
-        const autocomplete = new google.maps.places.Autocomplete(input, options);
+        const autocomplete = new google.maps.places.Autocomplete(input, { 
+            types: ['address'], 
+            componentRestrictions: { country: "us" } 
+        });
 
         autocomplete.addListener('place_changed', function() {
             const place = autocomplete.getPlace();
             if (!place.geometry || !place.geometry.viewport) return;
 
-            // NEW REFINED MATH
             const bounds = place.geometry.viewport;
             const ne = bounds.getNorthEast();
             const sw = bounds.getSouthWest();
 
-            // Convert Lat/Lng degree differences to meters
             const latDist = Math.abs(ne.lat() - sw.lat()) * 111320; 
             const lngDist = Math.abs(ne.lng() - sw.lng()) * 40075000 * Math.cos(ne.lat() * Math.PI / 180) / 360;
 
-            // Calculate area of the viewable box in square feet
             let viewAreaSqFt = (latDist * 3.28084) * (lngDist * 3.28084);
 
-            // Refinement: Map viewports are roughly 3-4x larger than the actual lot.
-            // We assume 50% of the lot is actual mowable grass (subtracting house/drive).
-            let estimatedLawn = Math.round((viewAreaSqFt / 3.5) * 0.50);
+            // UPDATED MATH:
+            // 1. Divide by 4 (Google viewports are large)
+            // 2. Multiply by 0.35 (Assuming only 35% of that view is actual mowable grass)
+            let estimatedLawn = Math.round((viewAreaSqFt / 4) * 0.35);
 
-            // SAFETY CAP: If math results in over 1 acre (43,560 sq ft) for a residential address,
-            // it's likely catching the street/neighbors. We cap it to a large residential lot.
-            if (estimatedLawn > 40000) {
-                currentSqFt = 12500; 
+            // REALITY CHECK: Standard Joplin residential lot is roughly 7,000 - 12,000 sq ft.
+            // If the math says it's huge, we cap it so the price stays realistic.
+            if (estimatedLawn > 15000) {
+                currentSqFt = 12000; // Cap at a standard large lot
+            } else if (estimatedLawn < 3000) {
+                currentSqFt = 5000; // Minimum lot size floor
             } else {
                 currentSqFt = estimatedLawn;
             }
@@ -103,15 +97,14 @@
         
         const service = document.getElementById('service').value;
         
-        // Base pricing: $0.012 per sq ft
-        let price = currentSqFt * 0.012;
+        // Lowered base rate to $0.005 per sq ft for more competitive pricing
+        // A 10,000 sq ft lawn would be $50.00
+        let price = currentSqFt * 0.005;
         
-        // Minimum charge
-        if (price < 40) price = 40;
+        // Set a Base Minimum of $45.00
+        if (price < 45) price = 45;
 
-        // Service add-ons
         if (service === "Gutter Cleaning") price += 75;
-        if (service === "Landscaping") price += 100;
         if (service === "Limb Pick Up") price += 50;
 
         document.getElementById('priceBox').style.display = 'block';
@@ -120,12 +113,9 @@
     }
 
     document.getElementById('service').addEventListener('change', updatePrice);
-    
     document.getElementById('quoteForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const name = document.getElementById('userName').value;
-        const finalPrice = document.getElementById('priceLabel').innerText;
-        alert("Thanks " + name + "! Your estimate of " + finalPrice + " has been logged. We will contact you shortly.");
+        alert("Estimate Sent! We'll contact you to confirm the details.");
     });
 </script>
 
