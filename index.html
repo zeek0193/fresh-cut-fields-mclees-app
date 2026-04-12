@@ -5,149 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fresh Cut Fields & McLees</title>
     <style>
-        body { 
-            background: #1a1a1a url('https://www.transparenttextures.com/patterns/dark-wood.png'); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; color: #fff;
-        }
-        .logo-container { text-align: center; margin-bottom: 20px; max-width: 480px; width: 100%; }
-        .logo-img { max-width: 100%; height: auto; border: 2px solid #d4af37; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
-        .card { 
-            background: rgba(43, 29, 14, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
-            max-width: 480px; width: 100%; border: 3px solid #5d4037; position: relative;
-        }
-        .card::before {
-            content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px;
-            background: linear-gradient(90deg, #d4af37, #f1e5ac, #d4af37); border-radius: 20px 20px 0 0;
-        }
-        h2.card-title { color: #d4af37; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px; font-size: 20px; }
-        label { display: block; margin-top: 15px; font-size: 11px; font-weight: bold; color: #d4af37; text-transform: uppercase; }
-        input, select, textarea { 
-            width: 100%; padding: 12px; margin: 5px 0 10px; border: 1px solid #5d4037; border-radius: 8px; 
-            box-sizing: border-box; font-size: 16px; background: #fffdfa; color: #333;
-        }
-        .price-box { 
-            background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; 
-            text-align: center; display: none; margin: 15px 0; border: 2px solid #d4af37; 
-        }
-        .price-box p { margin: 0; color: #f1e5ac; font-size: 14px; font-weight: bold; }
-        .price-box h2 { margin: 5px 0; color: #fff; font-size: 42px; text-shadow: 2px 2px 4px #000; }
-        .checkbox-group { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid #5d4037; }
-        .checkbox-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #f1e5ac; }
-        .checkbox-item input { width: auto; margin-right: 12px; transform: scale(1.3); }
-        button { 
-            width: 100%; padding: 18px; background: linear-gradient(180deg, #2d5a27, #1b5e20); 
-            color: white; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; 
-            cursor: pointer; margin-top: 10px; text-transform: uppercase;
-        }
-        .footer-text { text-align: center; font-size: 12px; color: #d4af37; margin-top: 20px; text-transform: uppercase; }
+        body { background: #1a1a1a; font-family: sans-serif; color: #fff; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: #2b1d0e; padding: 25px; border-radius: 20px; border: 3px solid #5d4037; max-width: 450px; width: 100%; }
+        .logo { max-width: 100%; border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37; }
+        label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 12px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: none; font-size: 16px; }
+        .price-display { background: #1b5e20; padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
+        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .sqft-text { font-size: 14px; color: #f1e5ac; margin-bottom: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="logo-container">
-    <img src="IMG_20260325_165435.jpg" alt="Logo" class="logo-img">
-    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold;">417-499-1916</p>
-</div>
+<img src="IMG_20260325_165435.jpg" class="logo">
 
 <div class="card">
-    <h2 class="card-title">Free Instant Quote</h2>
-    
     <form action="https://getform.io/f/m56kua56s1k" method="POST">
-        <input type="hidden" name="_next" value="https://forminit.com/thank-you">
-        
-        <label>Name</label>
-        <input type="text" name="name" placeholder="Your Name" required>
-        
-        <label>Address</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Property Address" required>
-        
-        <div id="priceBox" class="price-box">
-            <p id="sqftLabel"></p>
-            <h2 id="priceLabel"></h2>
-            <input type="hidden" name="quote_total" id="hiddenPrice">
+        <label>NAME</label>
+        <input type="text" name="customer_name" required>
+
+        <label>ADDRESS</label>
+        <input type="text" id="autocomplete" name="address" placeholder="Start typing address..." required>
+
+        <div id="priceBox" class="price-display">
+            <div id="sqftDisplay" class="sqft-text"></div>
+            <h2 id="priceLabel" style="font-size: 44px; margin: 0;"></h2>
+            <input type="hidden" name="quote_price" id="hiddenPrice">
+            <input type="hidden" name="estimated_sqft" id="hiddenSqft">
         </div>
 
-        <label>Service Frequency</label>
+        <label>FREQUENCY</label>
         <select name="frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
-            <option value="BiWeekly">Bi-Weekly Mowing</option>
+            <option value="Bi-Weekly">Bi-Weekly Mowing</option>
         </select>
 
-        <label>Add-Ons</label>
-        <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea (+$35)</label>
-            <label class="checkbox-item"><input type="checkbox" name="bug_spray" class="addon" data-price="30"> Bug Spray (+$30)</label>
-            <label class="checkbox-item"><input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
+        <label>ADD-ONS</label>
+        <div style="font-size: 14px; margin-top: 10px;">
+            <input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea (+$35)<br>
+            <input type="checkbox" name="bug_spray" class="addon" data-price="30"> Bug Spray (+$30)<br>
+            <input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)
         </div>
-        
-        <label>Notes</label>
-        <textarea name="message" placeholder="Gates, Dogs, etc."></textarea>
-        
-        <button type="submit">Send Quote Request</button>
+
+        <button type="submit">SUBMIT QUOTE</button>
     </form>
 </div>
 
-<div class="footer-text">Lawn Care • Landscaping • Property Maintenance</div>
-
 <script>
-    // ADJUST THESE NUMBERS TO TWEAK PRICE
-    const COST_PER_SQFT = 0.005; // Dropped from 0.007 (Lower is cheaper)
-    const MINIMUM_PRICE = 40.00; // Dropped from 45.00
+    // PRICING SETTINGS
+    const RATE = 0.0032; // Price per sq ft
+    const BASE_MIN = 35.00; // Absolute minimum price
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
-        const autocomplete = new google.maps.places.Autocomplete(input, { 
+        const auto = new google.maps.places.Autocomplete(input, { 
             types: ['address'], 
-            componentRestrictions: { country: "us" } 
+            componentRestrictions: {country: 'us'} 
         });
 
-        autocomplete.addListener('place_changed', function() {
-            const place = autocomplete.getPlace();
+        auto.addListener('place_changed', function() {
+            const place = auto.getPlace();
             if (!place.geometry || !place.geometry.viewport) return;
 
+            // Accurate Math: Calculate area based on real map coordinates
             const ne = place.geometry.viewport.getNorthEast();
             const sw = place.geometry.viewport.getSouthWest();
             
-            const latDist = (ne.lat() - sw.lat()) * 111320 * 3.28084;
-            const lngDist = (ne.lng() - sw.lng()) * 111320 * Math.cos(ne.lat() * Math.PI / 180) * 3.28084;
-
-            // AREA MODIFIER: Reduced from 0.40 to 0.30 to estimate less grass area
-            let rawArea = (latDist * lngDist) * 0.30; 
+            // Convert Degrees to Feet (Roughly 364,000 feet per degree)
+            const width = Math.abs(ne.lng() - sw.lng()) * 290000; 
+            const height = Math.abs(ne.lat() - sw.lat()) * 364000;
             
-            if (rawArea > 30000) window.currentSqFt = 20000;
-            else if (rawArea < 3000) window.currentSqFt = 4500;
-            else window.currentSqFt = Math.round(rawArea / 100) * 100;
+            // Estimate only 35% of the total lot is actual grass (removing house/driveway)
+            let calcArea = (width * height) * 0.35;
 
-            updatePrice();
+            // Guardrails: Prevents weirdly small or massive numbers
+            if (calcArea < 4000) calcArea = 5000;
+            if (calcArea > 35000) calcArea = 22000;
+
+            window.currentSqFt = Math.round(calcArea / 100) * 100;
+            update();
         });
     }
 
-    function updatePrice() {
+    function update() {
         if (!window.currentSqFt) return;
-        let price = window.currentSqFt * COST_PER_SQFT;
         
-        if (document.getElementById('service').value === "BiWeekly") {
-            price *= 1.15; // Lowered bi-weekly upcharge from 1.25
-        }
+        let price = window.currentSqFt * RATE;
         
-        if (price < MINIMUM_PRICE) price = MINIMUM_PRICE;
+        // Add 20% for Bi-Weekly (taller grass)
+        if (document.getElementById('service').value === "Bi-Weekly") price *= 1.20;
+        
+        // Ensure it doesn't drop below your minimum
+        if (price < BASE_MIN) price = BASE_MIN;
 
         let addons = 0;
-        document.querySelectorAll('.addon:checked').forEach(box => {
-            addons += parseFloat(box.getAttribute('data-price'));
-        });
-
+        document.querySelectorAll('.addon:checked').forEach(a => addons += parseFloat(a.dataset.price));
+        
         const total = Math.round(price + addons);
+        
         document.getElementById('priceBox').style.display = 'block';
-        document.getElementById('sqftLabel').innerText = "Estimated Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
+        document.getElementById('sqftDisplay').innerText = "EST. LAWN: " + window.currentSqFt.toLocaleString() + " SQ FT";
         document.getElementById('priceLabel').innerText = "$" + total;
         document.getElementById('hiddenPrice').value = "$" + total;
+        document.getElementById('hiddenSqft').value = window.currentSqFt;
     }
 
-    document.getElementById('service').addEventListener('change', updatePrice);
-    document.querySelectorAll('.addon').forEach(item => item.addEventListener('change', updatePrice));
+    document.getElementById('service').onchange = update;
+    document.querySelectorAll('.addon').forEach(a => a.onchange = update);
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
 </body>
 </html>
