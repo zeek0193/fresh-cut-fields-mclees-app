@@ -65,12 +65,6 @@ useEffect(() => {
 
   loadScript();
 }, []);
-useEffect(() => { if (!window.google) return;
-
-const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current);
-
-autocomplete.addListener("place_changed", () => {
-  const place = autocomplete.getPlace();
 
   if (!place.geometry || !place.geometry.viewport) return;
 
