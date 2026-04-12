@@ -7,82 +7,129 @@
     <style>
         body { 
             background: #1a1a1a url('https://www.transparenttextures.com/patterns/dark-wood.png'); 
-            font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; color: #fff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            color: #fff;
         }
-        .logo-container { text-align: center; margin-bottom: 20px; max-width: 480px; width: 100%; }
-        .logo-img { max-width: 100%; height: auto; border: 2px solid #d4af37; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+            max-width: 480px;
+            width: 100%;
+        }
+        .logo-img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #d4af37;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
         .card { 
-            background: rgba(43, 29, 14, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
-            max-width: 480px; width: 100%; border: 3px solid #5d4037; position: relative;
+            background: rgba(43, 29, 14, 0.95); 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+            max-width: 480px; 
+            width: 100%; 
+            border: 3px solid #5d4037; 
+            position: relative;
         }
         .card::before {
-            content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px;
-            background: linear-gradient(90deg, #d4af37, #f1e5ac, #d4af37); border-radius: 20px 20px 0 0;
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 8px;
+            background: linear-gradient(90deg, #d4af37, #f1e5ac, #d4af37);
+            border-radius: 20px 20px 0 0;
         }
-        h2.card-title { color: #d4af37; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 2px; font-size: 20px; }
+        h2.card-title { 
+            color: #d4af37; 
+            text-align: center; 
+            margin-top: 10px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            font-size: 20px;
+        }
         label { display: block; margin-top: 15px; font-size: 11px; font-weight: bold; color: #d4af37; text-transform: uppercase; }
         input, select, textarea { 
-            width: 100%; padding: 12px; margin: 5px 0 10px; border: 1px solid #5d4037; border-radius: 8px; 
-            box-sizing: border-box; font-size: 16px; background: #fffdfa; color: #333;
+            width: 100%; padding: 12px; margin: 5px 0 10px; 
+            border: 1px solid #5d4037; border-radius: 8px; 
+            box-sizing: border-box; font-size: 16px; 
+            background: #fffdfa; color: #333;
         }
         .price-box { 
-            background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; 
-            text-align: center; display: none; margin: 15px 0; border: 2px solid #d4af37; 
+            background: linear-gradient(180deg, #1b5e20, #2d5a27); 
+            padding: 20px; border-radius: 15px; 
+            text-align: center; display: none; margin: 15px 0; 
+            border: 2px solid #d4af37; 
         }
+        .price-box p { margin: 0; color: #f1e5ac; font-size: 14px; font-weight: bold; }
         .price-box h2 { margin: 5px 0; color: #fff; font-size: 42px; text-shadow: 2px 2px 4px #000; }
+        
         .checkbox-group { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid #5d4037; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #f1e5ac; }
         .checkbox-item input { width: auto; margin-right: 12px; transform: scale(1.3); }
+        
         button { 
-            width: 100%; padding: 18px; background: linear-gradient(180deg, #2d5a27, #1b5e20); 
-            color: white; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; 
-            cursor: pointer; margin-top: 10px; text-transform: uppercase;
+            width: 100%; padding: 18px; 
+            background: linear-gradient(180deg, #2d5a27, #1b5e20); 
+            color: white; border: 2px solid #d4af37; 
+            border-radius: 12px; font-size: 20px; font-weight: bold; 
+            cursor: pointer; margin-top: 10px;
+            text-transform: uppercase;
         }
+        .footer-text { text-align: center; font-size: 12px; color: #d4af37; margin-top: 20px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div class="logo-container">
-    <img src="5248.jpg" alt="Logo" class="logo-img">
-    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold;">417-499-1916</p>
+    <img src="5248.jpg" alt="Fresh Cut Fields & McLees Logo" class="logo-img">
+    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">417-499-1916</p>
 </div>
 
 <div class="card">
     <h2 class="card-title">Free Instant Quote</h2>
     
-    <form action="https://getform.io/f/m56kua56s1k" method="POST">
+    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="quoteForm">
         <input type="hidden" name="_next" value="https://forminit.com/thank-you">
         
         <label>Name</label>
-        <input type="text" name="Customer_Name" placeholder="Your Name" required>
+        <input type="text" name="customer_name" placeholder="Your Name" required>
         
         <label>Address</label>
-        <input type="text" id="autocomplete" name="Property_Address" placeholder="Enter Property Address..." required>
+        <input type="text" id="autocomplete" name="address" placeholder="Enter Property Address..." required autocomplete="off">
         
         <div id="priceBox" class="price-box">
+            <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
-            <input type="hidden" name="Quoted_Price" id="hiddenPrice">
+            <input type="hidden" name="quoted_total" id="hiddenPrice">
         </div>
 
         <label>Frequency</label>
-        <select name="Mowing_Frequency" id="service">
+        <select name="service_frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="BiWeekly">Bi-Weekly Mowing</option>
         </select>
 
         <label>Add-On Services</label>
         <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" name="Addon_Tick_Flea" class="addon" data-price="35"> Tick & Flea (+$35)</label>
-            <label class="checkbox-item"><input type="checkbox" name="Addon_Bug_Spray" class="addon" data-price="30"> Bug Spray (+$30)</label>
-            <label class="checkbox-item"><input type="checkbox" name="Addon_Limb_Pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
+            <label class="checkbox-item"><input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea Granules (+$35)</label>
+            <label class="checkbox-item"><input type="checkbox" name="bug_spray" class="addon" data-price="30"> Perimeter Bug Spray (+$30)</label>
+            <label class="checkbox-item"><input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
         </div>
         
-        <label>Special Instructions</label>
-        <textarea name="Customer_Notes" placeholder="Gates, Pets, etc."></textarea>
+        <label>Notes</label>
+        <textarea name="customer_notes" placeholder="Additional Notes (Gates, Pets, etc.)"></textarea>
         
-        <button type="submit">Submit Request</button>
+        <button type="submit">Submit Quote Request</button>
     </form>
 </div>
+
+<div class="footer-text">Lawn Care • Landscaping • Property Maintenance</div>
 
 <script>
     const COST_PER_SQFT = 0.007; 
@@ -131,12 +178,17 @@
 
         const total = Math.round(price + addons);
         document.getElementById('priceBox').style.display = 'block';
+        document.getElementById('sqftLabel').innerText = "Est. Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
         document.getElementById('priceLabel').innerText = "$" + total;
+        
+        // This makes sure the price is actually included in the data sent to Getform
         document.getElementById('hiddenPrice').value = "$" + total;
     }
 
     document.getElementById('service').addEventListener('change', updatePrice);
     document.querySelectorAll('.addon').forEach(item => item.addEventListener('change', updatePrice));
+    
+    // REMOVED the e.preventDefault() that was likely causing the empty submission error
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
