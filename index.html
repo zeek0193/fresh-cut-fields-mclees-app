@@ -15,6 +15,16 @@ body {
     flex-direction:column;
     align-items:center;
 }
+.logo-box {
+    text-align:center;
+    margin-bottom:20px;
+}
+.logo-box img {
+    width:300px;
+    max-width:100%;
+    border-radius:12px;
+    border:2px solid #d4af37;
+}
 .card {
     background:#2b1d0e;
     padding:25px;
@@ -59,6 +69,15 @@ button {
 
 <body>
 
+<!-- LOGO -->
+<div class="logo-box">
+    <img src="logo.png" alt="Fresh Cut Fields & McLees">
+    <p style="color:#f1e5ac; font-weight:bold; margin-top:10px;">
+        Call/Text: 417-499-1916
+    </p>
+</div>
+
+<!-- FORM -->
 <div class="card">
 <form action="https://getform.io/f/m56kua56s1k" method="POST">
 
@@ -101,8 +120,8 @@ button {
 <canvas id="canvas" width="300" height="300" style="display:none;"></canvas>
 
 <script>
-const API_KEY = "YOUR_API_KEY_HERE";
-const RATE = 0.0045; // tuned better pricing
+const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk";
+const RATE = 0.0045;
 
 function initAutocomplete(){
     const input = document.getElementById("autocomplete");
@@ -130,22 +149,18 @@ function analyze(lat,lng){
         ctx.drawImage(img,0,0);
 
         const data = ctx.getImageData(0,0,300,300).data;
-
         let grass=0;
 
         for(let i=0;i<data.length;i+=4){
             let r=data[i], g=data[i+1], b=data[i+2];
 
-            // MUCH better grass detection
             if(g > r * 1.15 && g > b * 1.15 && g > 70){
                 grass++;
             }
         }
 
-        // improved scaling (your old one was way off)
         let sqft = grass * 0.35;
 
-        // realistic caps
         sqft = Math.max(3000, Math.min(20000, sqft));
 
         window.sqft = Math.round(sqft);
@@ -163,7 +178,6 @@ function update(){
         price *= 1.25;
     }
 
-    // add-ons
     document.querySelectorAll(".addon:checked").forEach(a=>{
         price += parseFloat(a.dataset.price);
     });
@@ -200,7 +214,7 @@ $${window.price}`;
 }
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places&callback=initAutocomplete"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
 
 </body>
 </html>
