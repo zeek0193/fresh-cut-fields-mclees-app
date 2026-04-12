@@ -7,8 +7,7 @@
     <style>
         body { 
             background: #1a1a1a url('https://www.transparenttextures.com/patterns/dark-wood.png'); 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; color: #fff;
+            font-family: sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; color: #fff;
         }
         .logo-container { text-align: center; margin-bottom: 20px; max-width: 480px; width: 100%; }
         .logo-img { max-width: 100%; height: auto; border: 2px solid #d4af37; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); }
@@ -30,7 +29,6 @@
             background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; 
             text-align: center; display: none; margin: 15px 0; border: 2px solid #d4af37; 
         }
-        .price-box p { margin: 0; color: #f1e5ac; font-size: 14px; font-weight: bold; }
         .price-box h2 { margin: 5px 0; color: #fff; font-size: 42px; text-shadow: 2px 2px 4px #000; }
         .checkbox-group { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px; border: 1px solid #5d4037; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #f1e5ac; }
@@ -40,14 +38,13 @@
             color: white; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; 
             cursor: pointer; margin-top: 10px; text-transform: uppercase;
         }
-        .footer-text { text-align: center; font-size: 12px; color: #d4af37; margin-top: 20px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div class="logo-container">
-    <img src="IMG_20260325_165435.jpg" alt="Logo" class="logo-img">
-    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold;">Call/Text: 417-499-1916</p>
+    <img src="5248.jpg" alt="Logo" class="logo-img">
+    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold;">417-499-1916</p>
 </div>
 
 <div class="card">
@@ -57,38 +54,35 @@
         <input type="hidden" name="_next" value="https://forminit.com/thank-you">
         
         <label>Name</label>
-        <input type="text" name="name" placeholder="Your Name" required>
+        <input type="text" name="Customer_Name" placeholder="Your Name" required>
         
         <label>Address</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Property Address" required>
+        <input type="text" id="autocomplete" name="Property_Address" placeholder="Enter Property Address..." required>
         
         <div id="priceBox" class="price-box">
-            <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
-            <input type="hidden" name="quote_total" id="hiddenPrice">
+            <input type="hidden" name="Quoted_Price" id="hiddenPrice">
         </div>
 
-        <label>Service Frequency</label>
-        <select name="frequency" id="service">
+        <label>Frequency</label>
+        <select name="Mowing_Frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="BiWeekly">Bi-Weekly Mowing</option>
         </select>
 
-        <label>Add-Ons</label>
+        <label>Add-On Services</label>
         <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea (+$35)</label>
-            <label class="checkbox-item"><input type="checkbox" name="bug_spray" class="addon" data-price="30"> Bug Spray (+$30)</label>
-            <label class="checkbox-item"><input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
+            <label class="checkbox-item"><input type="checkbox" name="Addon_Tick_Flea" class="addon" data-price="35"> Tick & Flea (+$35)</label>
+            <label class="checkbox-item"><input type="checkbox" name="Addon_Bug_Spray" class="addon" data-price="30"> Bug Spray (+$30)</label>
+            <label class="checkbox-item"><input type="checkbox" name="Addon_Limb_Pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
         </div>
         
-        <label>Notes</label>
-        <textarea name="message" placeholder="Gates, Dogs, etc."></textarea>
+        <label>Special Instructions</label>
+        <textarea name="Customer_Notes" placeholder="Gates, Pets, etc."></textarea>
         
-        <button type="submit">Send Quote Request</button>
+        <button type="submit">Submit Request</button>
     </form>
 </div>
-
-<div class="footer-text">Lawn Care • Landscaping • Property Maintenance</div>
 
 <script>
     const COST_PER_SQFT = 0.007; 
@@ -96,32 +90,47 @@
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
-        const autocomplete = new google.maps.places.Autocomplete(input, { types: ['address'], componentRestrictions: { country: "us" } });
+        const autocomplete = new google.maps.places.Autocomplete(input, { 
+            types: ['address'], 
+            componentRestrictions: { country: "us" } 
+        });
+
         autocomplete.addListener('place_changed', function() {
             const place = autocomplete.getPlace();
-            if (!place.geometry) return;
+            if (!place.geometry || !place.geometry.viewport) return;
+
             const bounds = place.geometry.viewport;
             const latMid = (bounds.getNorthEast().lat() + bounds.getSouthWest().lat()) / 2.0;
             const mPerDegLat = 111132;
             const mPerDegLng = 111412 * Math.cos(latMid * Math.PI / 180);
+
             const widthFt = Math.abs(bounds.getNorthEast().lng() - bounds.getSouthWest().lng()) * mPerDegLng * 3.28084;
             const heightFt = Math.abs(bounds.getNorthEast().lat() - bounds.getSouthWest().lat()) * mPerDegLat * 3.28084;
+
             let estimatedGrass = Math.round((widthFt * heightFt / 4.8) * 0.45);
-            window.currentSqFt = (estimatedGrass > 20000) ? 16000 : (estimatedGrass < 4000) ? 7000 : estimatedGrass;
+
+            if (estimatedGrass > 20000) window.currentSqFt = 16000;
+            else if (estimatedGrass < 4000) window.currentSqFt = 7000;
+            else window.currentSqFt = estimatedGrass;
+
             updatePrice();
         });
     }
 
     function updatePrice() {
         if (!window.currentSqFt) return;
+        
         let price = window.currentSqFt * COST_PER_SQFT;
         if (document.getElementById('service').value === "BiWeekly") price *= 1.20;
         if (price < MINIMUM_PRICE) price = MINIMUM_PRICE;
+
         let addons = 0;
-        document.querySelectorAll('.addon:checked').forEach(box => addons += parseFloat(box.getAttribute('data-price')));
+        document.querySelectorAll('.addon:checked').forEach(box => {
+            addons += parseFloat(box.getAttribute('data-price'));
+        });
+
         const total = Math.round(price + addons);
         document.getElementById('priceBox').style.display = 'block';
-        document.getElementById('sqftLabel').innerText = "Est. Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
         document.getElementById('priceLabel').innerText = "$" + total;
         document.getElementById('hiddenPrice').value = "$" + total;
     }
@@ -129,6 +138,8 @@
     document.getElementById('service').addEventListener('change', updatePrice);
     document.querySelectorAll('.addon').forEach(item => item.addEventListener('change', updatePrice));
 </script>
+
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
 </body>
 </html>
