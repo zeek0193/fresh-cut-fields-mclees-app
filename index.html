@@ -1,1 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fresh Cut Fields - Instant Quote</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; background: #f4f7f4; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; width: 100%; border-top: 5px solid #4CAF50; }
+        h1 { color: #2d5a27; text-align: center; margin-bottom: 5px; }
+        p.phone { text-align: center; color: #666; margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .price-box { background: #e8f5e9; padding: 15px; border-radius: 10px; text-align: center; display: none; margin: 10px 0; }
+        button { width: 100%; padding: 15px; background: #4CAF50; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>Fresh Cut Fields</h1>
+    <p class="phone">Call or Text: 417-499-1916</p>
+    
+    <form id="quoteForm">
+        <input type="text" placeholder="Full Name" required>
+        <input type="text" id="autocomplete" placeholder="Enter Address">
+        
+        <div id="priceBox" class="price-box">
+            <p id="sqftLabel"></p>
+            <h2 id="priceLabel" style="margin: 5px 0; color: #1b5e20;"></h2>
+        </div>
+
+        <select id="service">
+            <option value="Mowing">Mowing</option>
+            <option value="Limb Pick Up">Limb Pick Up</option>
+            <option value="Gutter Cleaning">Gutter Cleaning</option>
+        </select>
+        
+        <textarea placeholder="Additional Notes"></textarea>
+        <button type="submit">Get Instant Quote</button>
+    </form>
+</div>
+
+<script>
+    let currentSqFt = 0;
+
+    function initAutocomplete() {
+        const input = document.getElementById('autocomplete');
+        const autocomplete = new google.maps.places.Autocomplete(input, { types: ['address'] });
+
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) return;
+
+            const bounds = place.geometry.viewport;
+            const latDiff = Math.abs(bounds.getNorthEast().lat() - bounds.getSouthWest().lat());
+            const lngDiff = Math.abs(bounds.getNorthEast().lng() - bounds.getSouthWest().lng());
+
+            currentSqFt = Math.round(latDiff * lngDiff * 3.587e10 * 0.6);
+            updatePrice();
+        });
+    }
+
+    function updatePrice() {
+        if (currentSqFt === 0) return;
+        const service = document.getElementById('service').value;
+        let price = currentSqFt * 0.012;
+        if (price < 40) price = 40;
+        if (service === "Gutter Cleaning") price += 75;
+
+        document.getElementById('priceBox').style.display = 'block';
+        document.getElementById('sqftLabel').innerText = "Est. Lawn: " + currentSqFt.toLocaleString() + " sq ft";
+        document.getElementById('priceLabel').innerText = "Price: $" + Math.round(price);
+    }
+
+    document.getElementById('service').addEventListener('change', updatePrice);
+    document.getElementById('quoteForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert("Quote request sent!");
+    });
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
+</body>
+</html>
 
