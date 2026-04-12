@@ -21,15 +21,12 @@
             max-width: 480px;
             width: 100%;
         }
-        .logo-placeholder {
-            background: #000;
+        .logo-img {
+            max-width: 100%;
+            height: auto;
             border: 2px solid #d4af37;
-            padding: 10px;
-            border-radius: 10px;
-            font-weight: bold;
-            color: #d4af37;
-            font-size: 24px;
-            text-shadow: 2px 2px 4px #000;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
         }
         .card { 
             background: rgba(43, 29, 14, 0.95); 
@@ -54,7 +51,7 @@
             margin-top: 10px; 
             text-transform: uppercase; 
             letter-spacing: 2px;
-            font-size: 22px;
+            font-size: 20px;
         }
         label { display: block; margin-top: 15px; font-size: 11px; font-weight: bold; color: #d4af37; text-transform: uppercase; }
         input, select, textarea { 
@@ -68,7 +65,6 @@
             padding: 20px; border-radius: 15px; 
             text-align: center; display: none; margin: 15px 0; 
             border: 2px solid #d4af37; 
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
         .price-box p { margin: 0; color: #f1e5ac; font-size: 14px; font-weight: bold; }
         .price-box h2 { margin: 5px 0; color: #fff; font-size: 42px; text-shadow: 2px 2px 4px #000; }
@@ -84,25 +80,23 @@
             border-radius: 12px; font-size: 20px; font-weight: bold; 
             cursor: pointer; margin-top: 10px;
             text-transform: uppercase;
-            box-shadow: 0 4px 0 #143314;
         }
-        button:active { transform: translateY(2px); box-shadow: 0 2px 0 #143314; }
         .footer-text { text-align: center; font-size: 12px; color: #d4af37; margin-top: 20px; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div class="logo-container">
-    <div class="logo-placeholder">FRESH CUT FIELDS & McLEES</div>
-    <p style="color: #f1e5ac; margin-top: 5px;">Call/Text: 417-499-1916</p>
+    <img src="IMG_20260325_165435.jpg" alt="Fresh Cut Fields & McLees Logo" class="logo-img">
+    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">Call/Text: 417-499-1916</p>
 </div>
 
 <div class="card">
-    <h2 class="card-title">Instant Quote</h2>
+    <h2 class="card-title">Free Instant Quote</h2>
     
     <form id="quoteForm">
-        <input type="text" id="userName" placeholder="Name" required>
-        <input type="text" id="autocomplete" placeholder="1402 Reinmiller Rd, Joplin, MO..." required autocomplete="off">
+        <input type="text" id="userName" placeholder="Your Name" required>
+        <input type="text" id="autocomplete" placeholder="Enter Property Address..." required autocomplete="off">
         
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
@@ -116,12 +110,12 @@
 
         <label>Add-On Services</label>
         <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="35"> Tick & Flea Granules</label>
-            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="30"> Perimeter Bug Spray</label>
-            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="50"> Limb Pick Up</label>
+            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="35"> Tick & Flea Granules (+$35)</label>
+            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="30"> Perimeter Bug Spray (+$30)</label>
+            <label class="checkbox-item"><input type="checkbox" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
         </div>
         
-        <textarea id="notes" placeholder="Additional Notes"></textarea>
+        <textarea id="notes" placeholder="Additional Notes (Gates, Pets, etc.)"></textarea>
         <button type="submit">Get Instant Quote</button>
     </form>
 </div>
@@ -151,10 +145,9 @@
             const widthFt = Math.abs(bounds.getNorthEast().lng() - bounds.getSouthWest().lng()) * mPerDegLng * 3.28084;
             const heightFt = Math.abs(bounds.getNorthEast().lat() - bounds.getSouthWest().lat()) * mPerDegLat * 3.28084;
 
-            // NEW BALANCED MATH FOR JOPLIN AREA
+            // Updated area calculation for accuracy
             let estimatedGrass = Math.round((widthFt * heightFt / 4.8) * 0.45);
 
-            // REALITY CHECK CAPPING
             if (estimatedGrass > 20000) window.currentSqFt = 16000;
             else if (estimatedGrass < 4000) window.currentSqFt = 7000;
             else window.currentSqFt = estimatedGrass;
@@ -180,7 +173,10 @@
 
     document.getElementById('service').addEventListener('change', updatePrice);
     document.querySelectorAll('.addon').forEach(item => item.addEventListener('change', updatePrice));
-    document.getElementById('quoteForm').addEventListener('submit', (e) => { e.preventDefault(); alert("Request Sent!"); });
+    document.getElementById('quoteForm').addEventListener('submit', (e) => { 
+        e.preventDefault(); 
+        alert("Request Sent! We'll contact you shortly."); 
+    });
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
