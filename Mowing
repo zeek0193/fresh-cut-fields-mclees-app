@@ -1,148 +1,169 @@
-import React, { useState, useEffect, useRef } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Input } from "@/components/ui/input"; import { Textarea } from "@/components/ui/textarea";
+import React, { useState, useEffect, useRef } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
-// AUTO-DETECT LAWN (NO DRAWING) // Uses Google Maps + approximation (can upgrade to real satellite APIs later)
+export default function LawnApp() {
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    service: "Mowing",
+    notes: "",
+  });
 
-export default function LawnApp() { const [form, setForm] = useState({ name: "", phone: "", address: "", service: "Mowing", notes: "", });
+  const [sqft, setSqft] = useState(null);
+  const [price, setPrice] = useState(null);
 
-const [sqft, setSqft] = useState(null); const [price, setPrice] = useState(null);
+  const addressRef = useRef(null);
 
-const addressRef = useRef(null);
+  const calculatePrice = (sqft, service) => {
+    if (!sqft) return 40;
 
-const calculatePrice = (sqft, service) => { if (!sqft) return 40;
+    let base = sqft * 0.012;
 
-let base = sqft * 0.012; // slightly lower since estimate includes non-grass
+    if (base < 40) base = 40;
 
-if (base < 40) base = 40;
+    if (service === "Gutter Cleaning") base += 75;
+    if (service === "Landscaping") base += 100;
+    if (service === "Limb Pick Up") base += 50;
 
-if (service === "Gutter Cleaning") base += 75;
-if (service === "Landscaping") base += 100;
-if (service === "Limb Pick Up") base += 50;
-
-return Math.round(base);
-
-};
-useEffect(() => {
-  const loadScript = () => {
-    if (document.getElementById("google-maps")) return;
-
-    const script = document.createElement("script");
-    script.id = "google-maps";
-    script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places";
-    script.async = true;
-    script.defer = true;
-
-    script.onload = initAutocomplete;
-
-    document.body.appendChild(script);
+    return Math.round(base);
   };
 
-  const initAutocomplete = () => {
-    if (!window.google || !addressRef.current) return;
+  useEffect(() => {
+    const loadScript = () => {
+      if (document.getElementById("google-maps")) {
+        initAutocomplete();
+        return;
+      }
 
-    const autocomplete = new window.google.maps.places.Autocomplete(
-      addressRef.current
-    );
+      const script = document.createElement("script");
+      script.id = "google-maps";
+      script.src =
+        "https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places";
+      script.async = true;
+      script.defer = true;
 
-    autocomplete.addListener("place_changed", () => {
-      const place = autocomplete.getPlace();
+      script.onload = initAutocomplete;
 
-      if (!place.geometry || !place.geometry.viewport) return;
+      document.body.appendChild(script);
+    };
 
-      const bounds = place.geometry.viewport;
-      const ne = bounds.getNorthEast();
-      const sw = bounds.getSouthWest();
+    const initAutocomplete = () => {
+      if (!window.google || !addressRef.current) return;
 
-      const latDiff = Math.abs(ne.lat() - sw.lat());
-      const lngDiff = Math.abs(ne.lng() - sw.lng());
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        addressRef.current
+      );
 
-      let totalSqFt = latDiff * lngDiff * 3.587e10;
-      let lawnSqFt = Math.round(totalSqFt * 0.6);
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
 
-      setSqft(lawnSqFt);
-      setPrice(calculatePrice(lawnSqFt, form.service));
-    });
+        if (!place.geometry || !place.geometry.viewport) return;
+
+        const bounds = place.geometry.viewport;
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+
+        const latDiff = Math.abs(ne.lat() - sw.lat());
+        const lngDiff = Math.abs(ne.lng() - sw.lng());
+
+        let totalSqFt = latDiff * lngDiff * 3.587e10;
+        let lawnSqFt = Math.round(totalSqFt * 0.6);
+
+        setSqft(lawnSqFt);
+        setPrice(calculatePrice(lawnSqFt, form.service));
+      });
+    };
+
+    loadScript();
+  }, []);
+
+  const handleChange = (e) => {
+    const updated = { ...form, [e.target.name]: e.target.value };
+    setForm(updated);
+
+    if (sqft) {
+      const newPrice = calculatePrice(sqft, updated.service);
+      setPrice(newPrice);
+    }
   };
 
-  loadScript();
-}, []);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert(`Quote submitted! Estimated price: $${price || 40}`);
+  };
 
-  if (!place.geometry || !place.geometry.viewport) return;
+  return (
+    <div className="p-6 grid gap-6 max-w-xl mx-auto">
+      <h1 className="text-3xl font-bold text-center">
+        Fresh Cut Fields and McLees
+      </h1>
+      <p className="text-center">Call or Text: 417-499-1916</p>
 
-  const bounds = place.geometry.viewport;
-  const ne = bounds.getNorthEast();
-  const sw = bounds.getSouthWest();
+      <Card className="rounded-2xl shadow">
+        <CardContent className="p-4">
+          <h2 className="text-xl mb-4">Instant Quote</h2>
 
-  const latDiff = Math.abs(ne.lat() - sw.lat());
-  const lngDiff = Math.abs(ne.lng() - sw.lng());
+          <form onSubmit={handleSubmit} className="grid gap-3">
+            <Input
+              name="name"
+              placeholder="Full Name"
+              onChange={handleChange}
+              required
+            />
 
-  // Estimate total lot size
-  let totalSqFt = latDiff * lngDiff * 3.587e10;
+            <Input
+              name="phone"
+              placeholder="Phone Number"
+              onChange={handleChange}
+              required
+            />
 
-  // Estimate lawn portion (remove house/driveway ~40%)
-  let lawnSqFt = totalSqFt * 0.6;
+            <input
+              ref={addressRef}
+              name="address"
+              placeholder="Enter your address"
+              className="border p-2 rounded"
+              onChange={handleChange}
+              required
+            />
 
-  lawnSqFt = Math.round(lawnSqFt);
+            {sqft && (
+              <p className="text-sm">
+                Estimated Lawn Size: {sqft.toLocaleString()} sq ft
+              </p>
+            )}
 
-  setSqft(lawnSqFt);
+            {price && (
+              <p className="text-lg font-semibold">
+                Estimated Price: ${price}
+              </p>
+            )}
 
-  const newPrice = calculatePrice(lawnSqFt, form.service);
-  setPrice(newPrice);
-});
+            <select
+              name="service"
+              className="border p-2 rounded"
+              onChange={handleChange}
+            >
+              <option>Mowing</option>
+              <option>Limb Pick Up</option>
+              <option>Gutter Cleaning</option>
+              <option>Landscaping</option>
+            </select>
 
-}, []);
+            <Textarea
+              name="notes"
+              placeholder="Additional details"
+              onChange={handleChange}
+            />
 
-const handleChange = (e) => { const updated = { ...form, [e.target.name]: e.target.value }; setForm(updated);
-
-if (sqft) {
-  const newPrice = calculatePrice(sqft, updated.service);
-  setPrice(newPrice);
+            <Button type="submit">Get Instant Quote</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
-
-};
-
-const handleSubmit = (e) => { e.preventDefault(); alert(Quote submitted! Estimated price: $${price || 40}); };
-
-return ( <div className="p-6 grid gap-6 max-w-xl mx-auto"> <h1 className="text-3xl font-bold text-center"> Fresh Cut Fields and McLees </h1> <p className="text-center">Call or Text: 417-499-1916</p>
-
-<Card className="rounded-2xl shadow">
-    <CardContent className="p-4">
-      <h2 className="text-xl mb-4">Instant Quote</h2>
-
-      <form onSubmit={handleSubmit} className="grid gap-3">
-        <Input name="name" placeholder="Full Name" onChange={handleChange} required />
-        <Input name="phone" placeholder="Phone Number" onChange={handleChange} required />
-
-        <input
-  ref={addressRef}
-  name="address"
-  placeholder="Enter your address"
-  className="border p-2 rounded"
-  onChange={handleChange}
-  required
-/>
-
-        {sqft && (
-          <p className="text-sm">Estimated Lawn Size: {sqft.toLocaleString()} sq ft</p>
-        )}
-
-        {price && (
-          <p className="text-lg font-semibold">Estimated Price: ${price}</p>
-        )}
-
-        <select name="service" className="border p-2 rounded" onChange={handleChange}>
-          <option>Mowing</option>
-          <option>Limb Pick Up</option>
-          <option>Gutter Cleaning</option>
-          <option>Landscaping</option>
-        </select>
-
-        <Textarea name="notes" placeholder="Additional details" onChange={handleChange} />
-
-        <Button type="submit">Get Instant Quote</Button>
-      </form>
-    </CardContent>
-  </Card>
-</div>
-
-); }
-
