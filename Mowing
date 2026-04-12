@@ -1,160 +1,49 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 export default function LawnApp() {
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    service: "Mowing",
-    notes: "",
-  });
-
+  const [form, setForm] = useState({ name: "", phone: "", address: "", service: "Mowing" });
   const [sqft, setSqft] = useState(null);
   const [price, setPrice] = useState(null);
   const addressRef = useRef(null);
 
-  // Pricing Logic
-  const calculatePrice = (sqft, service) => {
-    if (!sqft) return 40;
-    let base = sqft * 0.012; 
+  const calculatePrice = (sqftValue, serviceType) => {
+    if (!sqftValue) return 40;
+    let base = sqftValue * 0.012; 
     if (base < 40) base = 40;
-
-    if (service === "Gutter Cleaning") base += 75;
-    if (service === "Landscaping") base += 100;
-    if (service === "Limb Pick Up") base += 50;
-
+    if (serviceType === "Gutter Cleaning") base += 75;
     return Math.round(base);
   };
 
-  // Load Google Maps Script and Init Autocomplete
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google) {
-        initAutocomplete();
-        return;
-      }
-
-      const script = document.createElement("script");
-      // Replace YOUR_API_KEY with your actual key or use process.env.REACT_APP_GOOGLE_MAPS_KEY
-      script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places";
-      script.async = true;
-      script.defer = true;
-      script.onload = initAutocomplete;
-      document.head.appendChild(script);
-    };
-
-    const initAutocomplete = () => {
-      if (!addressRef.current) return;
-
-      const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current, {
-        types: ["address"],
-        componentRestrictions: { country: "us" },
-      });
-
+    const script = document.createElement("script");
+    // Hardcode the key temporarily just to see if it loads!
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places`;
+    script.async = true;
+    script.onload = () => {
+      const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current);
       autocomplete.addListener("place_changed", () => {
         const place = autocomplete.getPlace();
-        if (!place.geometry || !place.geometry.viewport) return;
-
-        const bounds = place.geometry.viewport;
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-
-        const latDiff = Math.abs(ne.lat() - sw.lat());
-        const lngDiff = Math.abs(ne.lng() - sw.lng());
-
-        // Calculation logic
-        let totalSqFt = latDiff * lngDiff * 3.587e10;
-        let lawnSqFt = Math.round(totalSqFt * 0.6);
-
-        setSqft(lawnSqFt);
-        setPrice(calculatePrice(lawnSqFt, form.service));
-        
-        // Update form state with the selected address
-        setForm(prev => ({ ...prev, address: place.formatted_address }));
+        if (place.geometry?.viewport) {
+          const ne = place.geometry.viewport.getNorthEast();
+          const sw = place.geometry.viewport.getSouthWest();
+          const lawnSqFt = Math.round(Math.abs(ne.lat() - sw.lat()) * Math.abs(ne.lng() - sw.lng()) * 3.587e10 * 0.6);
+          setSqft(lawnSqFt);
+          setPrice(calculatePrice(lawnSqFt, form.service));
+        }
       });
     };
-
-    loadGoogleMaps();
-  }, [form.service]);
-
-  const handleChange = (e) => {
-    const updated = { ...form, [e.target.name]: e.target.value };
-    setForm(updated);
-
-    if (sqft) {
-      setPrice(calculatePrice(sqft, updated.service));
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`Quote submitted for ${form.name}! Estimated price: $${price || 40}`);
-    // You can add logic here to send the data to your email or database
-  };
+    document.head.appendChild(script);
+  }, []);
 
   return (
-    <div className="p-6 grid gap-6 max-w-xl mx-auto">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">Fresh Cut Fields and McLees</h1>
-        <p className="text-muted-foreground mt-2">Call or Text: 417-499-1916</p>
+    <div style={{ padding: '20px', maxWidth: '500px', margin: 'auto', fontFamily: 'sans-serif' }}>
+      <h1>Fresh Cut Fields</h1>
+      <div style={{ border: '1px solid #ccc', padding: '20px', borderRadius: '10px' }}>
+        <input placeholder="Name" style={{ display: 'block', width: '100%', marginBottom: '10px' }} />
+        <input ref={addressRef} placeholder="Enter Address" style={{ display: 'block', width: '100%', marginBottom: '10px', padding: '10px' }} />
+        {price && <p><strong>Price: ${price}</strong></p>}
+        <button style={{ width: '100%', padding: '10px', background: 'green', color: 'white' }}>Get Quote</button>
       </div>
-
-      <Card className="rounded-2xl shadow-lg border-t-4 border-green-500">
-        <CardContent className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Instant Quote</h2>
-
-          <form onSubmit={handleSubmit} className="grid gap-4">
-            <div className="grid grid-cols-2 gap-2">
-              <Input name="name" placeholder="Full Name" onChange={handleChange} required />
-              <Input name="phone" placeholder="Phone Number" onChange={handleChange} required />
-            </div>
-
-            <input
-              ref={addressRef}
-              placeholder="Enter your property address"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              required
-            />
-
-            {sqft && (
-              <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                <p className="text-sm text-green-800">Estimated Lawn Size: <strong>{sqft.toLocaleString()} sq ft</strong></p>
-                {price && (
-                  <p className="text-lg font-bold text-green-900">Estimated Price: ${price}</p>
-                )}
-              </div>
-            )}
-
-            <div className="grid gap-1.5">
-              <label className="text-sm font-medium">Select Service</label>
-              <select 
-                name="service" 
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" 
-                onChange={handleChange}
-              >
-                <option>Mowing</option>
-                <option>Limb Pick Up</option>
-                <option>Gutter Cleaning</option>
-                <option>Landscaping</option>
-              </select>
-            </div>
-
-            <Textarea 
-              name="notes" 
-              placeholder="Any specific details? (e.g., gate codes, pets, tall grass)" 
-              onChange={handleChange} 
-            />
-
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg">
-              Get Instant Quote
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }
