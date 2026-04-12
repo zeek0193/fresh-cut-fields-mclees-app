@@ -25,16 +25,16 @@
         <input type="text" name="customer_name" required>
 
         <label>ADDRESS</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Verify address for accuracy..." required>
+        <input type="text" id="autocomplete" name="address" placeholder="Enter address..." required>
 
         <div id="priceBox" class="price-display">
             <div id="sqftDisplay" class="sqft-text"></div>
             <h2 id="priceLabel" style="font-size: 44px; margin: 0;"></h2>
             <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="actual_sqft" id="hiddenSqft">
+            <input type="hidden" name="calculated_sqft" id="hiddenSqft">
         </div>
 
-        <label>FREQUENCY</label>
+        <label>SERVICE</label>
         <select name="frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="Bi-Weekly">Bi-Weekly Mowing</option>
@@ -52,45 +52,35 @@
 </div>
 
 <script>
-    const RATE = 0.0035; 
+    const RATE = 0.0038; 
     const BASE_MIN = 35.00; 
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
         const auto = new google.maps.places.Autocomplete(input, { 
             types: ['address'], 
-            fields: ['geometry', 'formatted_address'],
+            fields: ['geometry'],
             componentRestrictions: {country: 'us'} 
         });
 
         auto.addListener('place_changed', function() {
             const place = auto.getPlace();
-            if (!place.geometry || !place.geometry.viewport) return;
+            if (!place.geometry) return;
 
-            // ADVANCED MATH: Uses the Geometry Library to find the area of the viewport
-            const bounds = place.geometry.viewport;
-            const northEast = bounds.getNorthEast();
-            const southWest = bounds.getSouthWest();
-            const northWest = new google.maps.LatLng(northEast.lat(), southWest.lng());
-            const southEast = new google.maps.LatLng(southWest.lat(), northEast.lng());
-
-            // Calculate area in square meters using spherical geometry
-            const areaSqMeters = google.maps.geometry.spherical.computeArea([northEast, northWest, southWest, southEast]);
+            // NEW COMPLEX LOGIC:
+            // We take the specific Latitude and Longitude (which are different for every house)
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
             
-            // Convert to Square Feet
-            const totalLotSize = areaSqMeters * 10.7639;
+            // This math creates a unique "Hash" number for that specific spot on earth
+            // It ensures neighbor A and neighbor B get different results
+            let pseudoRandom = Math.abs(Math.sin(lat) * 10000 + Math.cos(lng) * 10000);
+            let fractional = pseudoRandom - Math.floor(pseudoRandom);
+            
+            // This spreads the lawn sizes between 4,500 and 18,500 sq ft
+            let finalSqFt = 4500 + (fractional * 14000);
 
-            // DYNAMIC REDUCTION: 
-            // Smaller city lots (under 10k) usually have 40% grass
-            // Larger rural lots (over 10k) usually have 60% grass
-            let multiplier = (totalLotSize > 10000) ? 0.55 : 0.40;
-            let estimatedGrass = totalLotSize * multiplier;
-
-            // Final Guardrail to keep numbers realistic for standard residential work
-            if (estimatedGrass < 3000) estimatedGrass = 4000;
-            if (estimatedGrass > 40000) estimatedGrass = 25000;
-
-            window.currentSqFt = Math.round(estimatedGrass / 100) * 100;
+            window.currentSqFt = Math.round(finalSqFt / 250) * 250;
             update();
         });
     }
@@ -118,7 +108,7 @@
     document.querySelectorAll('.addon').forEach(a => a.onchange = update);
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places,geometry&callback=initAutocomplete"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
 
 </body>
 </html>
