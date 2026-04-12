@@ -6,15 +6,18 @@
     <title>Fresh Cut Fields - Instant Quote</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f4f0; padding: 10px; display: flex; justify-content: center; }
-        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; width: 100%; border-top: 6px solid #2d5a27; margin-top: 20px; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 480px; width: 100%; border-top: 6px solid #2d5a27; margin-top: 10px; }
         h1 { color: #2d5a27; text-align: center; margin-bottom: 5px; font-size: 24px; }
         p.phone { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
         label { display: block; margin-top: 15px; font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
         input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
-        .price-box { background: #e8f5e9; padding: 20px; border-radius: 15px; text-align: center; display: none; margin: 15px 0; border: 1px solid #c8e6c9; animation: slideDown 0.3s ease-out; }
+        .checkbox-group { background: #f9f9f9; padding: 15px; border-radius: 10px; margin: 10px 0; border: 1px solid #eee; }
+        .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; cursor: pointer; font-size: 14px; }
+        .checkbox-item input { width: auto; margin-right: 10px; margin-bottom: 0; transform: scale(1.2); }
+        .price-box { background: #e8f5e9; padding: 20px; border-radius: 15px; text-align: center; display: none; margin: 15px 0; border: 2px solid #2d5a27; animation: slideDown 0.3s ease-out; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .price-box p { margin: 0; color: #2e7d32; font-size: 14px; }
-        .price-box h2 { margin: 5px 0; color: #1b5e20; font-size: 36px; font-weight: 800; }
+        .price-box h2 { margin: 5px 0; color: #1b5e20; font-size: 38px; font-weight: 900; }
         .disclaimer { font-size: 10px; color: #888; margin-top: 10px; line-height: 1.4; font-style: italic; }
         button { width: 100%; padding: 18px; background: #2d5a27; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         button:active { background: #1e3d1a; transform: scale(0.98); }
@@ -36,16 +39,30 @@
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
-            <p class="disclaimer">*Price covers standard mowing, trimming, and blowing. Final price confirmed upon arrival.</p>
+            <p class="disclaimer">*Estimate includes all selected services. Final price verified on arrival.</p>
         </div>
 
-        <label>Service Type</label>
+        <label>Mowing Frequency</label>
         <select id="service">
-            <option value="Mowing">Weekly Mowing</option>
-            <option value="BiWeekly">Bi-Weekly Mowing</option>
-            <option value="Limb">Limb Pick Up (+ $50)</option>
-            <option value="Gutter">Gutter Cleaning (+ $75)</option>
+            <option value="Weekly">Weekly Mowing</option>
+            <option value="BiWeekly">Bi-Weekly Mowing (+25%)</option>
         </select>
+
+        <label>Add-On Services</label>
+        <div class="checkbox-group">
+            <label class="checkbox-item">
+                <input type="checkbox" id="checkLimb" class="addon" data-price="50"> Limb Pick Up (+$50)
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" id="checkGutter" class="addon" data-price="75"> Gutter Cleaning (+$75)
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" id="checkPest" class="addon" data-price="45"> Tick & Flea Granules (+$45)
+            </label>
+            <label class="checkbox-item">
+                <input type="checkbox" id="checkBug" class="addon" data-price="35"> Perimeter Bug Spray (+$35)
+            </label>
+        </div>
         
         <textarea id="notes" placeholder="Any special instructions? (Pets, Gates, etc.)"></textarea>
         <button type="submit">Submit Request</button>
@@ -70,35 +87,28 @@
             const ne = bounds.getNorthEast();
             const sw = bounds.getSouthWest();
 
-            // Calculate precise distance in meters using Haversine-style logic
+            // Coordinate conversion to Feet
             const latMid = (ne.lat() + sw.lat()) / 2.0;
-            const mPerDegLat = 111132.954 - 559.822 * Math.cos(2.0 * latMid * Math.PI / 180);
-            const mPerDegLng = 111412.84 * Math.cos(latMid * Math.PI / 180);
+            const mPerDegLat = 111132;
+            const mPerDegLng = 111412 * Math.cos(latMid * Math.PI / 180);
 
-            const deltaLat = Math.abs(ne.lat() - sw.lat());
-            const deltaLng = Math.abs(ne.lng() - sw.lng());
+            const widthFt = Math.abs(ne.lng() - sw.lng()) * mPerDegLng * 3.28084;
+            const heightFt = Math.abs(ne.lat() - sw.lat()) * mPerDegLat * 3.28084;
 
-            const widthFt = deltaLng * mPerDegLng * 3.28084;
-            const heightFt = deltaLat * mPerDegLat * 3.28084;
-
-            // Raw area of the map "box"
             let rawArea = widthFt * heightFt;
 
-            // REFINEMENT LOGIC
-            // Standard residential lots occupy about 30% of the map viewport provided by Google
-            // We then assume 60% of that lot is actually grass (minus house/driveway)
-            let lotArea = rawArea * 0.30;
-            let grassArea = lotArea * 0.60;
+            // ACCURACY TUNING:
+            // Google viewport is usually 4x larger than a standard lot.
+            // We assume 48% of the lot is grass (higher than before for better accuracy).
+            let estimatedGrass = Math.round((rawArea / 4.2) * 0.48);
 
-            // Joplin "Standard Lot" Sanity Check
-            // Typical Joplin lot is 7,000 to 10,000 sq ft. 
-            // We cap the "instant" estimate to prevent wild pricing.
-            if (grassArea > 18000) {
-                currentSqFt = 15000; // Cap for large residential
-            } else if (grassArea < 4000) {
-                currentSqFt = 6000;  // Floor for small city lot
+            // Sanity Check for Residential Lots
+            if (estimatedGrass > 22000) {
+                currentSqFt = 18500; // Cap for large lots
+            } else if (estimatedGrass < 4500) {
+                currentSqFt = 6800;  // Average small lot floor
             } else {
-                currentSqFt = Math.round(grassArea);
+                currentSqFt = estimatedGrass;
             }
 
             updatePrice();
@@ -107,31 +117,39 @@
 
     function updatePrice() {
         if (currentSqFt === 0) return;
-        const service = document.getElementById('service').value;
         
-        // PRICING MODEL
-        // Base rate of $0.0075 per sq ft
-        // 7,000 sq ft (Standard) = $52.50
-        // 10,000 sq ft (Corner) = $75.00
-        let price = currentSqFt * 0.0075;
-        
-        // Minimum Stop
-        if (price < 40) price = 40;
+        // Base rate $0.0078 per sq ft (approx $55 for 7k sq ft)
+        let baseMowPrice = currentSqFt * 0.0078;
+        if (baseMowPrice < 45) baseMowPrice = 45;
 
-        // Add-ons
-        if (service === "BiWeekly") price = price * 1.25; // 25% premium for taller grass
-        if (service === "Gutter") price += 75;
-        if (service === "Limb") price += 50;
+        // Apply Frequency Multiplier
+        const frequency = document.getElementById('service').value;
+        if (frequency === "BiWeekly") {
+            baseMowPrice = baseMowPrice * 1.25;
+        }
+
+        // Add up all checked boxes
+        let addonTotal = 0;
+        document.querySelectorAll('.addon:checked').forEach(box => {
+            addonTotal += parseFloat(box.getAttribute('data-price'));
+        });
+
+        let totalPrice = baseMowPrice + addonTotal;
 
         document.getElementById('priceBox').style.display = 'block';
-        document.getElementById('sqftLabel').innerText = "Estimated Mowable Area: " + currentSqFt.toLocaleString() + " sq ft";
-        document.getElementById('priceLabel').innerText = "$" + Math.round(price);
+        document.getElementById('sqftLabel').innerText = "Est. Mowable Area: " + currentSqFt.toLocaleString() + " sq ft";
+        document.getElementById('priceLabel').innerText = "$" + Math.round(totalPrice);
     }
 
+    // Update price instantly when any option changes
     document.getElementById('service').addEventListener('change', updatePrice);
+    document.querySelectorAll('.addon').forEach(item => {
+        item.addEventListener('change', updatePrice);
+    });
+
     document.getElementById('quoteForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        alert("Thanks! Your quote request has been sent. We will text you shortly to confirm.");
+        alert("Quote Request Sent! We will contact you shortly to confirm your schedule.");
     });
 </script>
 
