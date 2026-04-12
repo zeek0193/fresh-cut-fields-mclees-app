@@ -87,25 +87,29 @@
 <body>
 
 <div class="logo-container">
-    <img src="IMG_20260325_165435.jpg" alt="Fresh Cut Fields & McLees Logo" class="logo-img">
+    <img src="5248.jpg" alt="Fresh Cut Fields & McLees Logo" class="logo-img">
     <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold; text-shadow: 1px 1px 2px #000;">417-499-1916</p>
 </div>
 
 <div class="card">
     <h2 class="card-title">Free Instant Quote</h2>
     
-    <form action="https://getform.io/f/m56kua56s1k" method="POST">
+    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="quoteForm">
         <input type="hidden" name="_next" value="https://forminit.com/thank-you">
         
+        <label>Name</label>
         <input type="text" name="customer_name" placeholder="Your Name" required>
+        
+        <label>Address</label>
         <input type="text" id="autocomplete" name="address" placeholder="Enter Property Address..." required autocomplete="off">
         
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
-            <input type="hidden" name="quoted_price" id="hiddenPrice">
+            <input type="hidden" name="quoted_total" id="hiddenPrice">
         </div>
 
+        <label>Frequency</label>
         <select name="service_frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="BiWeekly">Bi-Weekly Mowing</option>
@@ -113,12 +117,14 @@
 
         <label>Add-On Services</label>
         <div class="checkbox-group">
-            <label class="checkbox-item"><input type="checkbox" name="pest_control" class="addon" data-price="35"> Tick & Flea Granules (+$35)</label>
+            <label class="checkbox-item"><input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea Granules (+$35)</label>
             <label class="checkbox-item"><input type="checkbox" name="bug_spray" class="addon" data-price="30"> Perimeter Bug Spray (+$30)</label>
             <label class="checkbox-item"><input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)</label>
         </div>
         
+        <label>Notes</label>
         <textarea name="customer_notes" placeholder="Additional Notes (Gates, Pets, etc.)"></textarea>
+        
         <button type="submit">Submit Quote Request</button>
     </form>
 </div>
@@ -174,11 +180,15 @@
         document.getElementById('priceBox').style.display = 'block';
         document.getElementById('sqftLabel').innerText = "Est. Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
         document.getElementById('priceLabel').innerText = "$" + total;
+        
+        // This makes sure the price is actually included in the data sent to Getform
         document.getElementById('hiddenPrice').value = "$" + total;
     }
 
     document.getElementById('service').addEventListener('change', updatePrice);
     document.querySelectorAll('.addon').forEach(item => item.addEventListener('change', updatePrice));
+    
+    // REMOVED the e.preventDefault() that was likely causing the empty submission error
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
