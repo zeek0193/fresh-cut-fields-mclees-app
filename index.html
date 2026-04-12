@@ -6,14 +6,12 @@
     <title>Fresh Cut Fields & McLees</title>
     <style>
         body { background: #1a1a1a; font-family: sans-serif; color: #fff; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .card { background: #2b1d0e; padding: 25px; border-radius: 20px; border: 3px solid #5d4037; max-width: 450px; width: 100%; }
+        .card { background: #2b1d0e; padding: 25px; border-radius: 20px; border: 3px solid #5d4037; max-width: 450px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .logo { max-width: 100%; border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37; }
-        label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 12px; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: none; font-size: 16px; }
-        .price-display { background: #1b5e20; padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
+        label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #5d4037; font-size: 16px; background: #fff; color: #333; }
+        .price-display { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
         button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .sqft-text { font-size: 14px; color: #f1e5ac; margin-bottom: 5px; font-weight: bold; }
-        /* Hidden canvas for satellite analysis */
         #analysisCanvas { display: none; }
     </style>
 </head>
@@ -23,48 +21,51 @@
 
 <div class="card">
     <form action="https://getform.io/f/m56kua56s1k" method="POST">
-        <label>NAME</label>
-        <input type="text" name="customer_name" required>
+        <label>Name</label>
+        <input type="text" name="customer_name" placeholder="John Doe" required>
 
-        <label>ADDRESS</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Calculating lawn from satellite..." required>
+        <label>Phone Number</label>
+        <input type="tel" name="customer_phone" placeholder="417-000-0000" required>
+
+        <label>Address</label>
+        <input type="text" id="autocomplete" name="address" placeholder="Enter address for satellite scan..." required>
 
         <div id="priceBox" class="price-display">
-            <div id="sqftDisplay" class="sqft-text">ANALYZING GREENERY...</div>
+            <div id="statusText" style="font-size: 12px; color: #f1e5ac; margin-bottom: 5px;">SCANNING PROPERTY...</div>
             <h2 id="priceLabel" style="font-size: 44px; margin: 0;">--</h2>
             <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="satellite_sqft" id="hiddenSqft">
+            <input type="hidden" name="detected_sqft" id="hiddenSqft">
         </div>
 
-        <label>SERVICE</label>
+        <label>Service Frequency</label>
         <select name="frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="Bi-Weekly">Bi-Weekly Mowing</option>
         </select>
 
-        <label>ADD-ONS</label>
-        <div style="font-size: 14px; margin-top: 10px;">
+        <label>Add-Ons</label>
+        <div style="font-size: 14px; margin-top: 10px; color: #f1e5ac;">
             <input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea (+$35)<br>
             <input type="checkbox" name="bug_spray" class="addon" data-price="30"> Bug Spray (+$30)<br>
             <input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)
         </div>
 
-        <button type="submit">SUBMIT QUOTE</button>
+        <button type="submit">Submit Quote Request</button>
     </form>
 </div>
 
 <canvas id="analysisCanvas" width="300" height="300"></canvas>
 
 <script>
-    const API_KEY = 'AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk'; // Your Google API Key
-    const RATE = 0.0038; 
-    const BASE_MIN = 35.00;
+    const API_KEY = 'AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk'; 
+    const RATE_PER_SQFT = 0.0035; 
+    const MIN_PRICE = 35.00;
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
         const auto = new google.maps.places.Autocomplete(input, { 
             types: ['address'], 
-            fields: ['geometry', 'formatted_address'],
+            fields: ['geometry'],
             componentRestrictions: {country: 'us'} 
         });
 
@@ -73,74 +74,68 @@
             if (!place.geometry) return;
 
             document.getElementById('priceBox').style.display = 'block';
-            document.getElementById('sqftDisplay').innerText = "SCANNING SATELLITE...";
-
+            
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
             
-            analyzeSatellite(lat, lng);
+            runSatelliteAnalysis(lat, lng);
         });
     }
 
-    function analyzeSatellite(lat, lng) {
+    function runSatelliteAnalysis(lat, lng) {
         const canvas = document.getElementById('analysisCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const img = new Image();
         
-        // Fetch a high-res satellite image centered on the home
         img.crossOrigin = "Anonymous";
+        // Grab a high-res satellite shot of the center of the property
         img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
 
         img.onload = function() {
             ctx.drawImage(img, 0, 0);
-            const imgData = ctx.getImageData(0, 0, 300, 300).data;
-            let greenPixels = 0;
+            const pixels = ctx.getImageData(0, 0, 300, 300).data;
+            let greeneryCount = 0;
 
-            // Loop through pixels and count "Green-dominant" ones (Grass/Trees)
-            for (let i = 0; i < imgData.length; i += 4) {
-                const r = imgData[i];
-                const g = imgData[i + 1];
-                const b = imgData[i + 2];
-                
-                // Detection logic for green grass vs gray pavement/brown roofs
-                if (g > r && g > b && g > 40) {
-                    greenPixels++;
-                }
+            for (let i = 0; i < pixels.length; i += 4) {
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                // Math logic to detect grass color vs pavement/roofs
+                if (g > r && g > b && g > 50) greeneryCount++;
             }
 
-            // Convert pixel count to approximate Sq Ft (Zoom 20 specific ratio)
-            const ratio = 0.15; 
-            let detectedSqFt = greenPixels * ratio;
-
-            // Filter out extreme errors
-            if (detectedSqFt < 3500) detectedSqFt = 4500;
-            if (detectedSqFt > 30000) detectedSqFt = 22000;
+            // Convert detected greenery into realistic sq ft
+            let detectedSqFt = greeneryCount * 0.16; 
+            
+            // Joplin-specific logic: ensure it stays within realistic residential bounds
+            if (detectedSqFt < 4000) detectedSqFt = 4500;
+            if (detectedSqFt > 35000) detectedSqFt = 20000;
 
             window.currentSqFt = Math.round(detectedSqFt / 250) * 250;
-            update();
+            updateUI();
         };
     }
 
-    function update() {
+    function updateUI() {
         if (!window.currentSqFt) return;
         
-        let price = window.currentSqFt * RATE;
+        let price = window.currentSqFt * RATE_PER_SQFT;
         if (document.getElementById('service').value === "Bi-Weekly") price *= 1.25;
-        if (price < BASE_MIN) price = BASE_MIN;
+        if (price < MIN_PRICE) price = MIN_PRICE;
 
         let addons = 0;
         document.querySelectorAll('.addon:checked').forEach(a => addons += parseFloat(a.dataset.price));
         
         const total = Math.round(price + addons);
         
-        document.getElementById('sqftDisplay').innerText = "SATELLITE EST: " + window.currentSqFt.toLocaleString() + " SQ FT";
+        document.getElementById('statusText').innerText = "EST. LAWN: " + window.currentSqFt.toLocaleString() + " SQ FT";
         document.getElementById('priceLabel').innerText = "$" + total;
         document.getElementById('hiddenPrice').value = "$" + total;
         document.getElementById('hiddenSqft').value = window.currentSqFt;
     }
 
-    document.getElementById('service').onchange = update;
-    document.querySelectorAll('.addon').forEach(a => a.onchange = update);
+    document.getElementById('service').onchange = updateUI;
+    document.querySelectorAll('.addon').forEach(a => a.onchange = updateUI);
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
