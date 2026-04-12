@@ -7,50 +7,44 @@
     <style>
         body { background: #1a1a1a; font-family: sans-serif; color: #fff; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .card { background: #2b1d0e; padding: 25px; border-radius: 20px; border: 3px solid #5d4037; max-width: 450px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .logo { max-width: 100%; border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37; }
+        h1 { color: #d4af37; text-align: center; margin-bottom: 20px; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
         label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #5d4037; font-size: 16px; background: #fff; color: #333; }
         .price-display { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
-        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+        button:disabled { background: #444; border-color: #666; cursor: not-allowed; opacity: 0.6; }
+        /* This hides the trap field from real users */
+        .hidden-trap { display: none !important; }
         #analysisCanvas { display: none; }
     </style>
 </head>
 <body>
 
-<img src="IMG_20260325_165435.jpg" class="logo">
-
 <div class="card">
-    <form action="https://getform.io/f/m56kua56s1k" method="POST">
-        <label>Name</label>
-        <input type="text" name="customer_name" placeholder="John Doe" required>
+    <h1>Fresh Cut Fields & McLees</h1>
+    
+    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
+        
+        <label>Customer Name</label>
+        <input type="text" name="name" placeholder="Full Name" required>
 
         <label>Phone Number</label>
-        <input type="tel" name="customer_phone" placeholder="0000000000" required>
+        <input type="tel" name="phone" placeholder="417-000-0000" required>
 
-        <label>Address</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Enter address for satellite scan..." required>
+        <label>Service Address</label>
+        <input type="text" id="autocomplete" name="address" placeholder="Enter address..." required>
+
+        <input type="text" name="confirm_email" class="hidden-trap" tabindex="-1" autocomplete="off">
 
         <div id="priceBox" class="price-display">
-            <div id="statusText" style="font-size: 12px; color: #f1e5ac; margin-bottom: 5px;">SCANNING PROPERTY...</div>
-            <h2 id="priceLabel" style="font-size: 44px; margin: 0;">--</h2>
+            <div id="statusText" style="font-size: 11px; color: #f1e5ac;">SATELLITE SCANNING...</div>
+            <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">--</h2>
+            
             <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="detected_sqft" id="hiddenSqft">
+            <input type="hidden" name="estimated_sqft" id="hiddenSqft">
         </div>
 
-        <label>Service Frequency</label>
-        <select name="frequency" id="service">
-            <option value="Weekly">Weekly Mowing</option>
-            <option value="Bi-Weekly">Bi-Weekly Mowing</option>
-        </select>
-
-        <label>Add-Ons</label>
-        <div style="font-size: 14px; margin-top: 10px; color: #f1e5ac;">
-            <input type="checkbox" name="tick_flea" class="addon" data-price="35"> Tick & Flea (+$35)<br>
-            <input type="checkbox" name="bug_spray" class="addon" data-price="30"> Bug Spray (+$30)<br>
-            <input type="checkbox" name="limb_pickup" class="addon" data-price="50"> Limb Pick Up (+$50)
-        </div>
-
-        <button type="submit">Submit Quote Request</button>
+        <button type="submit" id="submitBtn" disabled>Checking Property...</button>
     </form>
 </div>
 
@@ -58,27 +52,21 @@
 
 <script>
     const API_KEY = 'AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk'; 
-    const RATE_PER_SQFT = 0.0055; 
-    const MIN_PRICE = 40.00;
+    const RATE = 0.0035; 
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
-        const auto = new google.maps.places.Autocomplete(input, { 
-            types: ['address'], 
-            fields: ['geometry'],
-            componentRestrictions: {country: 'us'} 
-        });
+        const auto = new google.maps.places.Autocomplete(input, { types: ['address'] });
 
         auto.addListener('place_changed', function() {
             const place = auto.getPlace();
             if (!place.geometry) return;
 
             document.getElementById('priceBox').style.display = 'block';
-            
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            
-            runSatelliteAnalysis(lat, lng);
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').innerText = "Analyzing Satellite...";
+
+            runSatelliteAnalysis(place.geometry.location.lat(), place.geometry.location.lng());
         });
     }
 
@@ -86,59 +74,34 @@
         const canvas = document.getElementById('analysisCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const img = new Image();
-        
         img.crossOrigin = "Anonymous";
-        // Grab a high-res satellite shot of the center of the property
         img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
 
         img.onload = function() {
             ctx.drawImage(img, 0, 0);
             const pixels = ctx.getImageData(0, 0, 300, 300).data;
-            let greeneryCount = 0;
+            let greenCount = 0;
 
             for (let i = 0; i < pixels.length; i += 4) {
-                const r = pixels[i];
-                const g = pixels[i + 1];
-                const b = pixels[i + 2];
-                // Math logic to detect grass color vs pavement/roofs
-                if (g > r && g > b && g > 50) greeneryCount++;
+                if (pixels[i+1] > pixels[i] && pixels[i+1] > pixels[i+2]) greenCount++;
             }
 
-            // Convert detected greenery into realistic sq ft
-            let detectedSqFt = greeneryCount * 0.16; 
-            
-            // Joplin-specific logic: ensure it stays within realistic residential bounds
-            if (detectedSqFt < 4000) detectedSqFt = 4500;
-            if (detectedSqFt > 35000) detectedSqFt = 20000;
+            let sqft = Math.max(3000, Math.round((greenCount * 0.175) / 100) * 100);
+            let finalPrice = Math.round(sqft * RATE);
 
-            window.currentSqFt = Math.round(detectedSqFt / 250) * 250;
-            updateUI();
+            document.getElementById('statusText').innerText = "EST. AREA: " + sqft.toLocaleString() + " SQ FT";
+            document.getElementById('priceLabel').innerText = "$" + finalPrice;
+            
+            // Fills the data boxes BEFORE unlocking the submit button
+            document.getElementById('hiddenPrice').value = "$" + finalPrice;
+            document.getElementById('hiddenSqft').value = sqft + " sqft";
+            
+            document.getElementById('submitBtn').innerText = "Send Quote Request";
+            document.getElementById('submitBtn').disabled = false;
         };
     }
-
-    function updateUI() {
-        if (!window.currentSqFt) return;
-        
-        let price = window.currentSqFt * RATE_PER_SQFT;
-        if (document.getElementById('service').value === "Bi-Weekly") price *= 1.25;
-        if (price < MIN_PRICE) price = MIN_PRICE;
-
-        let addons = 0;
-        document.querySelectorAll('.addon:checked').forEach(a => addons += parseFloat(a.dataset.price));
-        
-        const total = Math.round(price + addons);
-        
-        document.getElementById('statusText').innerText = "EST. LAWN: " + window.currentSqFt.toLocaleString() + " SQ FT";
-        document.getElementById('priceLabel').innerText = "$" + total;
-        document.getElementById('hiddenPrice').value = "$" + total;
-        document.getElementById('hiddenSqft').value = window.currentSqFt;
-    }
-
-    document.getElementById('service').onchange = updateUI;
-    document.querySelectorAll('.addon').forEach(a => a.onchange = updateUI);
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
-
 </body>
 </html>
