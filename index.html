@@ -17,6 +17,7 @@
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
     button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
     .g-recaptcha { margin-top: 15px; display: flex; justify-content: center; }
+    .hidden-field { display: none !important; visibility: hidden; }
 </style>
 </head>
 <body>
@@ -32,6 +33,10 @@
 
         <label>Address</label>
         <input type="text" id="autocomplete" name="Address" required>
+
+        <div class="hidden-field">
+            <input type="text" name="_gotcha" tabindex="-1" autocomplete="off">
+        </div>
 
         <div id="priceBox" class="price-box">
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
