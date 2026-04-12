@@ -113,11 +113,13 @@ return ( <div className="p-6 grid gap-6 max-w-xl mx-auto"> <h1 className="text-3
         <Input name="phone" placeholder="Phone Number" onChange={handleChange} required />
 
         <input
-          ref={addressRef}
-          placeholder="Enter your address"
-          className="border p-2 rounded"
-          required
-        />
+  ref={addressRef}
+  name="address"
+  placeholder="Enter your address"
+  className="border p-2 rounded"
+  onChange={handleChange}
+  required
+/>
 
         {sqft && (
           <p className="text-sm">Estimated Lawn Size: {sqft.toLocaleString()} sq ft</p>
