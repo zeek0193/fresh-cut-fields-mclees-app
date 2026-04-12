@@ -32,7 +32,7 @@
         <input type="text" id="userName" placeholder="Full Name" required>
         
         <label>Property Address</label>
-        <input type="text" id="autocomplete" placeholder="Enter Address..." required>
+        <input type="text" id="autocomplete" placeholder="Start typing address..." required autocomplete="off">
         
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
@@ -60,12 +60,10 @@
 </div>
 
 <script>
-    // --- ADJUST THESE NUMBERS TO CHANGE PRICING ---
-    const COST_PER_SQFT = 0.006;  // Lowered from 0.0078 to be more competitive
-    const MINIMUM_PRICE = 40.00;  // The lowest you will ever charge for a trip
-    const GRASS_RATIO = 0.40;     // Assumes 40% of the lot is actual grass
-    const BIWEEKLY_BUMP = 1.20;   // 20% extra for bi-weekly instead of 25%
-    // ----------------------------------------------
+    const COST_PER_SQFT = 0.006; 
+    const MINIMUM_PRICE = 40.00; 
+    const GRASS_RATIO = 0.40;    
+    const BIWEEKLY_BUMP = 1.20;  
 
     let currentSqFt = 0;
 
@@ -74,6 +72,13 @@
         const autocomplete = new google.maps.places.Autocomplete(input, { 
             types: ['address'], 
             componentRestrictions: { country: "us" } 
+        });
+
+        // This prevents the "Enter" key from submitting the form while picking an address
+        google.maps.event.addDomListener(input, 'keydown', function(e) {
+            if (e.keyCode === 13 && document.querySelector('.pac-item-selected')) {
+                e.preventDefault();
+            }
         });
 
         autocomplete.addListener('place_changed', function() {
@@ -92,16 +97,12 @@
             const heightFt = Math.abs(ne.lat() - sw.lat()) * mPerDegLat * 3.28084;
 
             let rawArea = widthFt * heightFt;
-
-            // REFINED CALCULATION
-            // Google viewports are roughly 4.5x larger than a standard residential lot.
             let estimatedGrass = Math.round((rawArea / 4.5) * GRASS_RATIO);
 
-            // JOPLIN RESIDENTIAL LIMITS
             if (estimatedGrass > 18000) {
-                currentSqFt = 15000; // Cap for large lots to keep price reasonable
+                currentSqFt = 15000; 
             } else if (estimatedGrass < 4000) {
-                currentSqFt = 6000;  // Standard small city lot
+                currentSqFt = 6000;  
             } else {
                 currentSqFt = estimatedGrass;
             }
@@ -115,15 +116,12 @@
         
         let baseMowPrice = currentSqFt * COST_PER_SQFT;
         
-        // Apply Frequency Multiplier
         if (document.getElementById('service').value === "BiWeekly") {
             baseMowPrice = baseMowPrice * BIWEEKLY_BUMP;
         }
 
-        // Apply Minimum Price
         if (baseMowPrice < MINIMUM_PRICE) baseMowPrice = MINIMUM_PRICE;
 
-        // Add Checkbox Extras
         let addonTotal = 0;
         document.querySelectorAll('.addon:checked').forEach(box => {
             addonTotal += parseFloat(box.getAttribute('data-price'));
@@ -141,4 +139,13 @@
         item.addEventListener('change', updatePrice);
     });
 
-    document.
+    document.getElementById('quoteForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert("Success! Request Sent.");
+    });
+</script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
+</body>
+</html>
