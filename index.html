@@ -91,8 +91,9 @@
 <div class="footer-text">Lawn Care • Landscaping • Property Maintenance</div>
 
 <script>
-    const COST_PER_SQFT = 0.007; 
-    const MINIMUM_PRICE = 45.00; 
+    // ADJUST THESE NUMBERS TO TWEAK PRICE
+    const COST_PER_SQFT = 0.005; // Dropped from 0.007 (Lower is cheaper)
+    const MINIMUM_PRICE = 40.00; // Dropped from 45.00
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
@@ -105,21 +106,18 @@
             const place = autocomplete.getPlace();
             if (!place.geometry || !place.geometry.viewport) return;
 
-            // NEW CALCULATION: USES VIEWPORT BOUNDS DIFFERENTLY
             const ne = place.geometry.viewport.getNorthEast();
             const sw = place.geometry.viewport.getSouthWest();
             
-            // Calculate distance in meters then convert to feet
             const latDist = (ne.lat() - sw.lat()) * 111320 * 3.28084;
             const lngDist = (ne.lng() - sw.lng()) * 111320 * Math.cos(ne.lat() * Math.PI / 180) * 3.28084;
 
-            // Estimate grass area (reducing for house/driveway footprint)
-            let rawArea = (latDist * lngDist) * 0.40; 
+            // AREA MODIFIER: Reduced from 0.40 to 0.30 to estimate less grass area
+            let rawArea = (latDist * lngDist) * 0.30; 
             
-            // Apply logic to prevent the same number every time
-            if (rawArea > 35000) window.currentSqFt = 25000;
-            else if (rawArea < 5000) window.currentSqFt = 5500;
-            else window.currentSqFt = Math.round(rawArea / 100) * 100; // Round to nearest 100
+            if (rawArea > 30000) window.currentSqFt = 20000;
+            else if (rawArea < 3000) window.currentSqFt = 4500;
+            else window.currentSqFt = Math.round(rawArea / 100) * 100;
 
             updatePrice();
         });
@@ -130,7 +128,7 @@
         let price = window.currentSqFt * COST_PER_SQFT;
         
         if (document.getElementById('service').value === "BiWeekly") {
-            price *= 1.25; // Slight bump for bi-weekly
+            price *= 1.15; // Lowered bi-weekly upcharge from 1.25
         }
         
         if (price < MINIMUM_PRICE) price = MINIMUM_PRICE;
