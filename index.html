@@ -12,28 +12,32 @@
     label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
     input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; font-size: 16px; }
     .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
+    .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
+    .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
+    .addon-item input { width: 22px; height: 22px; margin-right: 10px; cursor: pointer; }
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
-    button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
-    .trap { display: none !important; }
+    .btn-text { background: #5d4037; border-color: #d4af37; margin-top: 8px; }
+    .trap { display: none !important; visibility: hidden; }
 </style>
 </head>
 <body>
 
 <div class="logo-box">
-    <img src="IMG_20260325_165435.jpg" alt="Logo">
+    <img src="IMG_20260325_165435.jpg" alt="Fresh Cut Fields & McLees">
+    <p style="color:#f1e5ac; font-weight:bold; margin-top:10px;">Call/Text: 417-499-1916</p>
 </div>
 
 <div class="card">
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
 
-        <label>Name</label>
-        <input type="text" name="Name" required>
+        <label>Full Name</label>
+        <input type="text" name="customer_name" required>
 
-        <label>Phone</label>
-        <input type="tel" name="Phone" required>
+        <label>Phone Number</label>
+        <input type="tel" name="customer_phone" required>
 
-        <label>Address</label>
-        <input type="text" id="autocomplete" name="Address" required>
+        <label>Service Address</label>
+        <input type="text" id="autocomplete" name="service_address" required>
 
         <input type="text" name="_gotcha" class="trap" tabindex="-1" autocomplete="off">
 
@@ -41,17 +45,25 @@
             <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SCANNING...</div>
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
             
-            <input type="hidden" name="Quote_Total" id="hiddenPrice">
-            <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
+            <input type="hidden" name="quote_price" id="hiddenPrice">
+            <input type="hidden" name="lawn_sqft" id="hiddenSqft">
         </div>
 
-        <label>Frequency</label>
-        <select name="Frequency" id="service">
+        <label>Mowing Frequency</label>
+        <select id="service" name="frequency">
             <option value="Weekly">Weekly</option>
             <option value="Bi-Weekly">Bi-Weekly</option>
         </select>
 
-        <button type="submit" id="submitBtn" disabled>Enter Address First</button>
+        <label>Add-Ons</label>
+        <div class="addon-section">
+            <div class="addon-item"><input type="checkbox" class="addon" name="limb_pickup" data-price="50"><span>Limb Pickup (+$50)</span></div>
+            <div class="addon-item"><input type="checkbox" class="addon" name="flea_tick" data-price="35"><span>Flea & Tick (+$35)</span></div>
+            <div class="addon-item"><input type="checkbox" class="addon" name="bug_spray" data-price="30"><span>Bug Spray (+$30)</span></div>
+        </div>
+
+        <button type="submit" id="submitBtn" disabled>Enter Address to Start</button>
+        <button type="button" class="btn-text" onclick="sendText()">Text Me This Quote</button>
     </form>
 </div>
 
@@ -69,6 +81,7 @@ function initAutocomplete(){
         if(!place.geometry) return;
         document.getElementById("priceBox").style.display = "block";
         document.getElementById("submitBtn").innerText = "Analyzing Satellite...";
+        document.getElementById("submitBtn").disabled = true;
         analyze(place.geometry.location.lat(), place.geometry.location.lng());
     });
 }
@@ -97,21 +110,29 @@ function update(){
     if(!window.sqft) return;
     let price = window.sqft * RATE;
     if(document.getElementById("service").value==="Bi-Weekly") price *= 1.25;
+    document.querySelectorAll(".addon:checked").forEach(a=> price += parseFloat(a.dataset.price));
     price = Math.round(price);
     
     document.getElementById("sqftText").innerText = "Est Lawn: " + window.sqft.toLocaleString() + " sq ft";
     document.getElementById("priceLabel").innerText = "$" + price;
     
     document.getElementById("hiddenPrice").value = "$" + price;
-    document.getElementById("hiddenSqft").value = window.sqft;
+    document.getElementById("hiddenSqft").value = window.sqft + " sqft";
+    window.price = price;
 }
 
 document.getElementById("service").onchange = update;
+document.querySelectorAll(".addon").forEach(a=>a.onchange=update);
+
+function sendText(){
+    if(!window.price) return alert("Select an address first.");
+    const msg = `Fresh Cut Fields Quote:\n${document.getElementById("autocomplete").value}\nLawn: ${window.sqft}sqft\nTotal: $${window.price}`;
+    window.location.href = `sms:4174991916?body=${encodeURIComponent(msg)}`;
+}
 
 document.getElementById('mainForm').onsubmit = function() {
-    // Final check: ensures hidden fields aren't empty
     if (!document.getElementById("hiddenPrice").value) {
-        alert("Please wait for the scan to finish.");
+        alert("Wait for the satellite scan to finish before submitting.");
         return false;
     }
 };
