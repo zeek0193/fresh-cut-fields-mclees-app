@@ -14,27 +14,25 @@
     .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
     button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
-    /* Completely hides the Honeypot from real users */
-    .trap { display: none !important; visibility: hidden; }
+    .trap { display: none !important; }
 </style>
 </head>
 <body>
 
 <div class="logo-box">
-    <img src="IMG_20260325_165435.jpg" alt="A to Z Blade Runners Logo">
-    <p style="color:#f1e5ac; font-weight:bold; margin-top:10px;">Joplin, MO | 417-499-1916</p>
+    <img src="IMG_20260325_165435.jpg" alt="Logo">
 </div>
 
 <div class="card">
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
 
-        <label>Full Name</label>
+        <label>Name</label>
         <input type="text" name="Name" required>
 
-        <label>Phone Number</label>
+        <label>Phone</label>
         <input type="tel" name="Phone" required>
 
-        <label>Service Address</label>
+        <label>Address</label>
         <input type="text" id="autocomplete" name="Address" required>
 
         <input type="text" name="_gotcha" class="trap" tabindex="-1" autocomplete="off">
@@ -43,17 +41,17 @@
             <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SCANNING...</div>
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
             
-            <input type="hidden" name="Total_Price" id="hiddenPrice">
+            <input type="hidden" name="Quote_Total" id="hiddenPrice">
             <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
         </div>
 
-        <label>Mowing Frequency</label>
+        <label>Frequency</label>
         <select name="Frequency" id="service">
             <option value="Weekly">Weekly</option>
-            <option value="Bi-Weekly">Bi-Weekly (+$25%)</option>
+            <option value="Bi-Weekly">Bi-Weekly</option>
         </select>
 
-        <button type="submit" id="submitBtn" disabled>Enter Address to Start</button>
+        <button type="submit" id="submitBtn" disabled>Enter Address First</button>
     </form>
 </div>
 
@@ -61,7 +59,7 @@
 
 <script>
 const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk";
-const RATE = 0.0045; // Adjust this rate as needed for Joplin area
+const RATE = 0.0045;
 
 function initAutocomplete(){
     const input = document.getElementById("autocomplete");
@@ -86,13 +84,12 @@ function analyze(lat,lng){
         const data = ctx.getImageData(0,0,300,300).data;
         let grass=0;
         for(let i=0;i<data.length;i+=4){
-            // Color detection for Missouri grass types
             if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70) grass++;
         }
         window.sqft = Math.round(Math.max(3000, Math.min(20000, grass * 0.35)));
         update();
         document.getElementById("submitBtn").disabled = false;
-        document.getElementById("submitBtn").innerText = "Submit Official Quote";
+        document.getElementById("submitBtn").innerText = "Submit Quote Request";
     };
 }
 
@@ -105,17 +102,16 @@ function update(){
     document.getElementById("sqftText").innerText = "Est Lawn: " + window.sqft.toLocaleString() + " sq ft";
     document.getElementById("priceLabel").innerText = "$" + price;
     
-    // Hard-coding values into hidden fields to prevent empty submissions
     document.getElementById("hiddenPrice").value = "$" + price;
-    document.getElementById("hiddenSqft").value = window.sqft + " sqft";
+    document.getElementById("hiddenSqft").value = window.sqft;
 }
 
 document.getElementById("service").onchange = update;
 
-// Final barrier: prevent submission if hidden data failed to load
 document.getElementById('mainForm').onsubmit = function() {
+    // Final check: ensures hidden fields aren't empty
     if (!document.getElementById("hiddenPrice").value) {
-        alert("Please wait for the satellite scan to calculate your price.");
+        alert("Please wait for the scan to finish.");
         return false;
     }
 };
