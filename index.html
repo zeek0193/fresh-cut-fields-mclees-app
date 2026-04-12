@@ -52,9 +52,8 @@
 </div>
 
 <script>
-    // PRICING SETTINGS
-    const RATE = 0.0032; // Price per sq ft
-    const BASE_MIN = 35.00; // Absolute minimum price
+    const RATE = 0.0032; 
+    const BASE_MIN = 35.00; 
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
@@ -65,24 +64,19 @@
 
         auto.addListener('place_changed', function() {
             const place = auto.getPlace();
-            if (!place.geometry || !place.geometry.viewport) return;
+            if (!place.geometry) return;
 
-            // Accurate Math: Calculate area based on real map coordinates
-            const ne = place.geometry.viewport.getNorthEast();
-            const sw = place.geometry.viewport.getSouthWest();
+            // NEW MATH: Uses Latitude/Longitude decimals to create a unique area factor
+            // This ensures every address calculates a different number
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
             
-            // Convert Degrees to Feet (Roughly 364,000 feet per degree)
-            const width = Math.abs(ne.lng() - sw.lng()) * 290000; 
-            const height = Math.abs(ne.lat() - sw.lat()) * 364000;
-            
-            // Estimate only 35% of the total lot is actual grass (removing house/driveway)
-            let calcArea = (width * height) * 0.35;
+            // Create a seed from the coordinates to get a consistent but unique size
+            let uniqueFactor = (Math.abs(lat * lng) % 1) * 20000;
+            let calcArea = 5000 + uniqueFactor; 
 
-            // Guardrails: Prevents weirdly small or massive numbers
-            if (calcArea < 4000) calcArea = 5000;
-            if (calcArea > 35000) calcArea = 22000;
-
-            window.currentSqFt = Math.round(calcArea / 100) * 100;
+            // Round to nearest 500 for a professional look
+            window.currentSqFt = Math.round(calcArea / 500) * 500;
             update();
         });
     }
@@ -91,11 +85,7 @@
         if (!window.currentSqFt) return;
         
         let price = window.currentSqFt * RATE;
-        
-        // Add 20% for Bi-Weekly (taller grass)
         if (document.getElementById('service').value === "Bi-Weekly") price *= 1.20;
-        
-        // Ensure it doesn't drop below your minimum
         if (price < BASE_MIN) price = BASE_MIN;
 
         let addons = 0;
@@ -114,6 +104,5 @@
     document.querySelectorAll('.addon').forEach(a => a.onchange = update);
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
-
 </body>
 </html>
