@@ -27,7 +27,7 @@ useEffect(() => {
 
     const script = document.createElement("script");
     script.id = "google-maps";
-    script.src = "https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places";
+    script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places";
     script.async = true;
     script.defer = true;
 
