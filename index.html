@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A to Z Blade Runners | Fresh Cut Fields</title>
+<title>Fresh Cut Fields & McLees</title>
 <style>
     body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
     .logo-box { text-align:center; margin-bottom:20px; }
@@ -12,12 +12,9 @@
     label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
     input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; font-size: 16px; }
     .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
-    .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
-    .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
-    .addon-item input { width: 22px; height: 22px; margin-right: 10px; cursor: pointer; }
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
-    .btn-text { background: #5d4037; border-color: #d4af37; margin-top: 8px; }
-    /* This satisfies the Honeypot requirement without blocking real users */
+    button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
+    /* Completely hides the Honeypot from real users */
     .trap { display: none !important; visibility: hidden; }
 </style>
 </head>
@@ -25,46 +22,38 @@
 
 <div class="logo-box">
     <img src="IMG_20260325_165435.jpg" alt="A to Z Blade Runners Logo">
-    <p style="color:#f1e5ac; font-weight:bold; margin-top:10px;">Call/Text: 417-499-1916</p>
+    <p style="color:#f1e5ac; font-weight:bold; margin-top:10px;">Joplin, MO | 417-499-1916</p>
 </div>
 
 <div class="card">
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
 
-        <label>Name</label>
-        <input type="text" name="customer_name" required>
+        <label>Full Name</label>
+        <input type="text" name="Name" required>
 
-        <label>Phone</label>
-        <input type="tel" name="customer_phone" required>
+        <label>Phone Number</label>
+        <input type="tel" name="Phone" required>
 
-        <label>Address</label>
-        <input type="text" id="autocomplete" name="service_location" required>
+        <label>Service Address</label>
+        <input type="text" id="autocomplete" name="Address" required>
 
         <input type="text" name="_gotcha" class="trap" tabindex="-1" autocomplete="off">
 
         <div id="priceBox" class="price-box">
-            <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SCANNING JOPLIN AREA...</div>
+            <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SCANNING...</div>
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
             
-            <input type="hidden" name="calculated_price" id="hiddenPrice">
-            <input type="hidden" name="estimated_sqft" id="hiddenSqft">
+            <input type="hidden" name="Total_Price" id="hiddenPrice">
+            <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
         </div>
 
-        <label>Mowing Schedule</label>
-        <select id="service" name="schedule_type">
+        <label>Mowing Frequency</label>
+        <select name="Frequency" id="service">
             <option value="Weekly">Weekly</option>
-            <option value="Bi-Weekly">Bi-Weekly</option>
+            <option value="Bi-Weekly">Bi-Weekly (+$25%)</option>
         </select>
 
-        <label>Extras</label>
-        <div class="addon-section">
-            <div class="addon-item"><input type="checkbox" class="addon" name="limb_pickup" data-price="50"><span>Limb Pickup (+$50)</span></div>
-            <div class="addon-item"><input type="checkbox" class="addon" name="flea_tick" data-price="35"><span>Flea & Tick (+$35)</span></div>
-            <div class="addon-item"><input type="checkbox" class="addon" name="bug_spray" data-price="30"><span>Bug Spray (+$30)</span></div>
-        </div>
-
         <button type="submit" id="submitBtn" disabled>Enter Address to Start</button>
-        <button type="button" class="btn-text" onclick="sendText()">Text Me This Quote</button>
     </form>
 </div>
 
@@ -72,7 +61,7 @@
 
 <script>
 const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk";
-const RATE = 0.0045;
+const RATE = 0.0045; // Adjust this rate as needed for Joplin area
 
 function initAutocomplete(){
     const input = document.getElementById("autocomplete");
@@ -82,7 +71,6 @@ function initAutocomplete(){
         if(!place.geometry) return;
         document.getElementById("priceBox").style.display = "block";
         document.getElementById("submitBtn").innerText = "Analyzing Satellite...";
-        document.getElementById("submitBtn").disabled = true;
         analyze(place.geometry.location.lat(), place.geometry.location.lng());
     });
 }
@@ -98,12 +86,13 @@ function analyze(lat,lng){
         const data = ctx.getImageData(0,0,300,300).data;
         let grass=0;
         for(let i=0;i<data.length;i+=4){
+            // Color detection for Missouri grass types
             if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70) grass++;
         }
         window.sqft = Math.round(Math.max(3000, Math.min(20000, grass * 0.35)));
         update();
         document.getElementById("submitBtn").disabled = false;
-        document.getElementById("submitBtn").innerText = "Send Quote Request";
+        document.getElementById("submitBtn").innerText = "Submit Official Quote";
     };
 }
 
@@ -111,31 +100,22 @@ function update(){
     if(!window.sqft) return;
     let price = window.sqft * RATE;
     if(document.getElementById("service").value==="Bi-Weekly") price *= 1.25;
-    document.querySelectorAll(".addon:checked").forEach(a=> price += parseFloat(a.dataset.price));
     price = Math.round(price);
     
     document.getElementById("sqftText").innerText = "Est Lawn: " + window.sqft.toLocaleString() + " sq ft";
     document.getElementById("priceLabel").innerText = "$" + price;
     
-    // Assigning data to hidden fields for Forminit
+    // Hard-coding values into hidden fields to prevent empty submissions
     document.getElementById("hiddenPrice").value = "$" + price;
     document.getElementById("hiddenSqft").value = window.sqft + " sqft";
-    window.price = price;
 }
 
 document.getElementById("service").onchange = update;
-document.querySelectorAll(".addon").forEach(a=>a.onchange=update);
 
-function sendText(){
-    if(!window.price) return alert("Select an address first.");
-    const msg = `Quote for ${document.getElementById("autocomplete").value}:\nLawn: ${window.sqft}sqft\nTotal: $${window.price}`;
-    window.location.href = `sms:4174991916?body=${encodeURIComponent(msg)}`;
-}
-
-// Ensure the form doesn't submit empty values
+// Final barrier: prevent submission if hidden data failed to load
 document.getElementById('mainForm').onsubmit = function() {
     if (!document.getElementById("hiddenPrice").value) {
-        alert("Wait for the satellite scan to finish.");
+        alert("Please wait for the satellite scan to calculate your price.");
         return false;
     }
 };
