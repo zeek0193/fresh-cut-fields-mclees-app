@@ -6,30 +6,72 @@
 <title>Fresh Cut Fields & McLees</title>
 
 <style>
-body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
-.card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; }
-label { margin-top:12px; display:block; color:#d4af37; font-size:12px; }
-input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; }
-.price-display { background:#1b5e20; padding:20px; border-radius:15px; text-align:center; margin:15px 0; display:none; }
-button { width:100%; padding:15px; margin-top:10px; background:#2d5a27; color:#fff; border:none; border-radius:10px; font-size:18px; }
+body {
+    background:#1a1a1a;
+    font-family:sans-serif;
+    color:#fff;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+.card {
+    background:#2b1d0e;
+    padding:25px;
+    border-radius:20px;
+    border:3px solid #5d4037;
+    max-width:450px;
+    width:100%;
+}
+label {
+    margin-top:12px;
+    display:block;
+    color:#d4af37;
+    font-size:12px;
+}
+input, select {
+    width:100%;
+    padding:12px;
+    margin-top:5px;
+    border-radius:8px;
+    border:none;
+}
+.price-box {
+    background:#1b5e20;
+    padding:20px;
+    border-radius:15px;
+    text-align:center;
+    margin:15px 0;
+    display:none;
+}
+button {
+    width:100%;
+    padding:15px;
+    margin-top:10px;
+    background:#2d5a27;
+    color:#fff;
+    border:none;
+    border-radius:10px;
+    font-size:18px;
+}
 </style>
 </head>
 
 <body>
 
 <div class="card">
-<form id="quoteForm" action="https://getform.io/f/m56kua56s1k" method="POST">
+<form action="https://getform.io/f/m56kua56s1k" method="POST">
 
 <label>Name</label>
-<input type="text" name="name" id="name" required>
+<input type="text" id="name" name="name" required>
 
 <label>Phone</label>
-<input type="tel" name="phone" id="phone" required>
+<input type="tel" id="phone" name="phone" required>
 
 <label>Address</label>
 <input type="text" id="autocomplete" name="address" required>
 
-<div id="priceBox" class="price-display">
+<div id="priceBox" class="price-box">
 <div id="sqftText"></div>
 <h2 id="priceLabel">$--</h2>
 
@@ -46,13 +88,12 @@ button { width:100%; padding:15px; margin-top:10px; background:#2d5a27; color:#f
 <label>Add-Ons</label>
 <div>
 <input type="checkbox" class="addon" data-price="50"> Limb Pickup (+$50)<br>
-<input type="checkbox" class="addon" data-price="35"> Flea & Tick (+$35)<br>
-<input type="checkbox" class="addon" data-price="30"> Bug Spray (+$30)
+<input type="checkbox" class="addon" data-price="35"> Flea & Tick Granules (+$35)<br>
+<input type="checkbox" class="addon" data-price="30"> Spray Around House (+$30)
 </div>
 
 <button type="submit">Submit Quote</button>
 <button type="button" onclick="sendText()">Text Me This Quote</button>
-<button type="button" onclick="bookNow()">Book This Service</button>
 
 </form>
 </div>
@@ -60,98 +101,106 @@ button { width:100%; padding:15px; margin-top:10px; background:#2d5a27; color:#f
 <canvas id="canvas" width="300" height="300" style="display:none;"></canvas>
 
 <script>
-const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk";
-const RATE = 0.005;
+const API_KEY = "YOUR_API_KEY_HERE";
+const RATE = 0.0045; // tuned better pricing
 
 function initAutocomplete(){
-const input = document.getElementById("autocomplete");
-const auto = new google.maps.places.Autocomplete(input);
+    const input = document.getElementById("autocomplete");
+    const auto = new google.maps.places.Autocomplete(input);
 
-auto.addListener("place_changed", ()=>{
-const place = auto.getPlace();
-if(!place.geometry) return;
+    auto.addListener("place_changed", ()=>{
+        const place = auto.getPlace();
+        if(!place.geometry) return;
 
-document.getElementById("priceBox").style.display = "block";
+        document.getElementById("priceBox").style.display = "block";
 
-analyze(place.geometry.location.lat(), place.geometry.location.lng());
-});
+        analyze(place.geometry.location.lat(), place.geometry.location.lng());
+    });
 }
 
 function analyze(lat,lng){
-const img = new Image();
-img.crossOrigin="Anonymous";
-img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
+    const img = new Image();
+    img.crossOrigin="Anonymous";
 
-img.onload = ()=>{
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-ctx.drawImage(img,0,0);
+    img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
 
-const data = ctx.getImageData(0,0,300,300).data;
-let grass=0;
+    img.onload = ()=>{
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img,0,0);
 
-for(let i=0;i<data.length;i+=4){
-let r=data[i], g=data[i+1], b=data[i+2];
-if(g>r && g>b && g>60) grass++;
-}
+        const data = ctx.getImageData(0,0,300,300).data;
 
-let sqft = Math.round(grass * 0.2);
-sqft = Math.max(4000, Math.min(25000, sqft));
+        let grass=0;
 
-window.sqft = sqft;
-update();
-};
+        for(let i=0;i<data.length;i+=4){
+            let r=data[i], g=data[i+1], b=data[i+2];
+
+            // MUCH better grass detection
+            if(g > r * 1.15 && g > b * 1.15 && g > 70){
+                grass++;
+            }
+        }
+
+        // improved scaling (your old one was way off)
+        let sqft = grass * 0.35;
+
+        // realistic caps
+        sqft = Math.max(3000, Math.min(20000, sqft));
+
+        window.sqft = Math.round(sqft);
+
+        update();
+    };
 }
 
 function update(){
-if(!window.sqft) return;
+    if(!window.sqft) return;
 
-let price = window.sqft * RATE;
+    let price = window.sqft * RATE;
 
-if(document.getElementById("service").value==="Bi-Weekly") price*=1.25;
+    if(document.getElementById("service").value==="Bi-Weekly"){
+        price *= 1.25;
+    }
 
-document.querySelectorAll(".addon:checked").forEach(a=>{
-price+=parseFloat(a.dataset.price);
-});
+    // add-ons
+    document.querySelectorAll(".addon:checked").forEach(a=>{
+        price += parseFloat(a.dataset.price);
+    });
 
-price = Math.round(price);
+    price = Math.round(price);
 
-document.getElementById("sqftText").innerText = window.sqft+" sq ft";
-document.getElementById("priceLabel").innerText = "$"+price;
+    document.getElementById("sqftText").innerText =
+        "Est Lawn: " + window.sqft.toLocaleString() + " sq ft";
 
-document.getElementById("hiddenPrice").value = price;
-document.getElementById("hiddenSqft").value = window.sqft;
+    document.getElementById("priceLabel").innerText = "$" + price;
 
-window.price = price;
+    document.getElementById("hiddenPrice").value = price;
+    document.getElementById("hiddenSqft").value = window.sqft;
+
+    window.price = price;
 }
 
 document.getElementById("service").onchange = update;
 document.querySelectorAll(".addon").forEach(a=>a.onchange=update);
 
 function sendText(){
-if(!window.price) return alert("Enter address first");
+    if(!window.price) return alert("Enter address first");
 
-const name=document.getElementById("name").value;
-const phone=document.getElementById("phone").value;
+    const name=document.getElementById("name").value;
+    const phone=document.getElementById("phone").value;
 
-const msg = `New Quote:
-Name: ${name}
-Phone: ${phone}
-SqFt: ${window.sqft}
-Price: $${window.price}`;
+    const msg = `New Lead:
+${name}
+${phone}
+${window.sqft} sqft
+$${window.price}`;
 
-window.location.href = `sms:4174991916?body=${encodeURIComponent(msg)}`;
+    window.location.href = `sms:4174991916?body=${encodeURIComponent(msg)}`;
 }
-
-function bookNow(){
-if(!window.price) return alert("Enter address first");
-
-alert("Booking request sent! We'll contact you shortly.");
-}
-
 </script>
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&libraries=places&callback=initAutocomplete"></script>
 
 </body>
 </html>
