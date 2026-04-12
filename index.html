@@ -11,10 +11,10 @@
         label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #5d4037; font-size: 16px; background: #fff; color: #333; }
         .price-display { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
-        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         button:disabled { background: #444; border-color: #666; cursor: not-allowed; opacity: 0.6; }
-        /* This hides the trap field from real users */
-        .hidden-trap { display: none !important; }
+        /* This hides the honeypot so real customers don't see or fill it */
+        .trap { display: none !important; }
         #analysisCanvas { display: none; }
     </style>
 </head>
@@ -25,26 +25,26 @@
     
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
         
-        <label>Customer Name</label>
-        <input type="text" name="name" placeholder="Full Name" required>
+        <label>Name</label>
+        <input type="text" name="name" required>
 
-        <label>Phone Number</label>
-        <input type="tel" name="phone" placeholder="417-000-0000" required>
+        <label>Phone</label>
+        <input type="tel" name="phone" required>
 
-        <label>Service Address</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Enter address..." required>
+        <label>Address</label>
+        <input type="text" id="autocomplete" name="address" required>
 
-        <input type="text" name="confirm_email" class="hidden-trap" tabindex="-1" autocomplete="off">
+        <input type="text" name="confirm_email" class="trap" tabindex="-1" autocomplete="off">
 
         <div id="priceBox" class="price-display">
-            <div id="statusText" style="font-size: 11px; color: #f1e5ac;">SATELLITE SCANNING...</div>
+            <div id="statusText" style="font-size: 11px; color: #f1e5ac;">SCANNING...</div>
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">--</h2>
             
             <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="estimated_sqft" id="hiddenSqft">
+            <input type="hidden" name="area_sqft" id="hiddenSqft">
         </div>
 
-        <button type="submit" id="submitBtn" disabled>Checking Property...</button>
+        <button type="submit" id="submitBtn" disabled>Scanning Property...</button>
     </form>
 </div>
 
@@ -66,11 +66,11 @@
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('submitBtn').innerText = "Analyzing Satellite...";
 
-            runSatelliteAnalysis(place.geometry.location.lat(), place.geometry.location.lng());
+            runSatelliteScan(place.geometry.location.lat(), place.geometry.location.lng());
         });
     }
 
-    function runSatelliteAnalysis(lat, lng) {
+    function runSatelliteScan(lat, lng) {
         const canvas = document.getElementById('analysisCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const img = new Image();
@@ -92,11 +92,11 @@
             document.getElementById('statusText').innerText = "EST. AREA: " + sqft.toLocaleString() + " SQ FT";
             document.getElementById('priceLabel').innerText = "$" + finalPrice;
             
-            // Fills the data boxes BEFORE unlocking the submit button
+            // Fills the data BEFORE unlocking the submit button
             document.getElementById('hiddenPrice').value = "$" + finalPrice;
             document.getElementById('hiddenSqft').value = sqft + " sqft";
             
-            document.getElementById('submitBtn').innerText = "Send Quote Request";
+            document.getElementById('submitBtn').innerText = "Submit Quote Request";
             document.getElementById('submitBtn').disabled = false;
         };
     }
