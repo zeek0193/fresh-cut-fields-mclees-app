@@ -47,7 +47,7 @@
 
 <div class="logo-container">
     <img src="IMG_20260325_165435.jpg" alt="Logo" class="logo-img">
-    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold;">Call/Text: 417-499-1916</p>
+    <p style="color: #f1e5ac; margin-top: 10px; font-weight: bold;">417-499-1916</p>
 </div>
 
 <div class="card">
@@ -96,18 +96,31 @@
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
-        const autocomplete = new google.maps.places.Autocomplete(input, { types: ['address'], componentRestrictions: { country: "us" } });
+        const autocomplete = new google.maps.places.Autocomplete(input, { 
+            types: ['address'], 
+            componentRestrictions: { country: "us" } 
+        });
+
         autocomplete.addListener('place_changed', function() {
             const place = autocomplete.getPlace();
-            if (!place.geometry) return;
-            const bounds = place.geometry.viewport;
-            const latMid = (bounds.getNorthEast().lat() + bounds.getSouthWest().lat()) / 2.0;
-            const mPerDegLat = 111132;
-            const mPerDegLng = 111412 * Math.cos(latMid * Math.PI / 180);
-            const widthFt = Math.abs(bounds.getNorthEast().lng() - bounds.getSouthWest().lng()) * mPerDegLng * 3.28084;
-            const heightFt = Math.abs(bounds.getNorthEast().lat() - bounds.getSouthWest().lat()) * mPerDegLat * 3.28084;
-            let estimatedGrass = Math.round((widthFt * heightFt / 4.8) * 0.45);
-            window.currentSqFt = (estimatedGrass > 20000) ? 16000 : (estimatedGrass < 4000) ? 7000 : estimatedGrass;
+            if (!place.geometry || !place.geometry.viewport) return;
+
+            // NEW CALCULATION: USES VIEWPORT BOUNDS DIFFERENTLY
+            const ne = place.geometry.viewport.getNorthEast();
+            const sw = place.geometry.viewport.getSouthWest();
+            
+            // Calculate distance in meters then convert to feet
+            const latDist = (ne.lat() - sw.lat()) * 111320 * 3.28084;
+            const lngDist = (ne.lng() - sw.lng()) * 111320 * Math.cos(ne.lat() * Math.PI / 180) * 3.28084;
+
+            // Estimate grass area (reducing for house/driveway footprint)
+            let rawArea = (latDist * lngDist) * 0.40; 
+            
+            // Apply logic to prevent the same number every time
+            if (rawArea > 35000) window.currentSqFt = 25000;
+            else if (rawArea < 5000) window.currentSqFt = 5500;
+            else window.currentSqFt = Math.round(rawArea / 100) * 100; // Round to nearest 100
+
             updatePrice();
         });
     }
@@ -115,13 +128,21 @@
     function updatePrice() {
         if (!window.currentSqFt) return;
         let price = window.currentSqFt * COST_PER_SQFT;
-        if (document.getElementById('service').value === "BiWeekly") price *= 1.20;
+        
+        if (document.getElementById('service').value === "BiWeekly") {
+            price *= 1.25; // Slight bump for bi-weekly
+        }
+        
         if (price < MINIMUM_PRICE) price = MINIMUM_PRICE;
+
         let addons = 0;
-        document.querySelectorAll('.addon:checked').forEach(box => addons += parseFloat(box.getAttribute('data-price')));
+        document.querySelectorAll('.addon:checked').forEach(box => {
+            addons += parseFloat(box.getAttribute('data-price'));
+        });
+
         const total = Math.round(price + addons);
         document.getElementById('priceBox').style.display = 'block';
-        document.getElementById('sqftLabel').innerText = "Est. Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
+        document.getElementById('sqftLabel').innerText = "Estimated Lawn: " + window.currentSqFt.toLocaleString() + " sq ft";
         document.getElementById('priceLabel').innerText = "$" + total;
         document.getElementById('hiddenPrice').value = "$" + total;
     }
