@@ -22,22 +22,22 @@
 <div class="card">
     <form action="https://getform.io/f/m56kua56s1k" method="POST">
         <label>Name</label>
-        <input type="text" name="customer_name" placeholder="John Doe" required>
+        <input type="text" name="customer_name" required>
 
         <label>Phone Number</label>
-        <input type="tel" name="customer_phone" placeholder="417-000-0000" required>
+        <input type="tel" name="customer_phone" placeholder="417-555-0123" required>
 
         <label>Address</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Enter address for satellite scan..." required>
+        <input type="text" id="autocomplete" name="address" placeholder="Scanning property..." required>
 
         <div id="priceBox" class="price-display">
-            <div id="statusText" style="font-size: 12px; color: #f1e5ac; margin-bottom: 5px;">SCANNING PROPERTY...</div>
+            <div id="statusText" style="font-size: 12px; color: #f1e5ac; margin-bottom: 5px;">SCANNING GREENERY...</div>
             <h2 id="priceLabel" style="font-size: 44px; margin: 0;">--</h2>
-            <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="detected_sqft" id="hiddenSqft">
+            <input type="hidden" name="quote_total" id="hiddenPrice">
+            <input type="hidden" name="est_sqft" id="hiddenSqft">
         </div>
 
-        <label>Service Frequency</label>
+        <label>Frequency</label>
         <select name="frequency" id="service">
             <option value="Weekly">Weekly Mowing</option>
             <option value="Bi-Weekly">Bi-Weekly Mowing</option>
@@ -57,8 +57,8 @@
 <canvas id="analysisCanvas" width="300" height="300"></canvas>
 
 <script>
-    const API_KEY = 'AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk'; 
-    const RATE_PER_SQFT = 0.0035; 
+    const API_KEY = 'YOUR_GOOGLE_API_KEY'; // Replace with your key
+    const RATE = 0.0035; 
     const MIN_PRICE = 35.00;
 
     function initAutocomplete() {
@@ -72,62 +72,43 @@
         auto.addListener('place_changed', function() {
             const place = auto.getPlace();
             if (!place.geometry) return;
-
             document.getElementById('priceBox').style.display = 'block';
-            
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
-            
-            runSatelliteAnalysis(lat, lng);
+            analyzeSatellite(place.geometry.location.lat(), place.geometry.location.lng());
         });
     }
 
-    function runSatelliteAnalysis(lat, lng) {
+    function analyzeSatellite(lat, lng) {
         const canvas = document.getElementById('analysisCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const img = new Image();
-        
         img.crossOrigin = "Anonymous";
-        // Grab a high-res satellite shot of the center of the property
         img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
 
         img.onload = function() {
             ctx.drawImage(img, 0, 0);
             const pixels = ctx.getImageData(0, 0, 300, 300).data;
-            let greeneryCount = 0;
-
+            let greenCount = 0;
             for (let i = 0; i < pixels.length; i += 4) {
-                const r = pixels[i];
-                const g = pixels[i + 1];
-                const b = pixels[i + 2];
-                // Math logic to detect grass color vs pavement/roofs
-                if (g > r && g > b && g > 50) greeneryCount++;
+                // Detect green pixels (Grass)
+                if (pixels[i+1] > pixels[i] && pixels[i+1] > pixels[i+2] && pixels[i+1] > 50) greenCount++;
             }
-
-            // Convert detected greenery into realistic sq ft
-            let detectedSqFt = greeneryCount * 0.16; 
-            
-            // Joplin-specific logic: ensure it stays within realistic residential bounds
-            if (detectedSqFt < 4000) detectedSqFt = 4500;
-            if (detectedSqFt > 35000) detectedSqFt = 20000;
-
-            window.currentSqFt = Math.round(detectedSqFt / 250) * 250;
+            // Pixel-to-sqft ratio
+            let sqft = greenCount * 0.16;
+            window.currentSqFt = Math.max(4000, Math.min(25000, Math.round(sqft / 250) * 250));
             updateUI();
         };
     }
 
     function updateUI() {
         if (!window.currentSqFt) return;
-        
-        let price = window.currentSqFt * RATE_PER_SQFT;
+        let price = window.currentSqFt * RATE;
         if (document.getElementById('service').value === "Bi-Weekly") price *= 1.25;
-        if (price < MIN_PRICE) price = MIN_PRICE;
+        price = Math.max(MIN_PRICE, price);
 
         let addons = 0;
         document.querySelectorAll('.addon:checked').forEach(a => addons += parseFloat(a.dataset.price));
         
         const total = Math.round(price + addons);
-        
         document.getElementById('statusText').innerText = "EST. LAWN: " + window.currentSqFt.toLocaleString() + " SQ FT";
         document.getElementById('priceLabel').innerText = "$" + total;
         document.getElementById('hiddenPrice').value = "$" + total;
@@ -137,8 +118,6 @@
     document.getElementById('service').onchange = updateUI;
     document.querySelectorAll('.addon').forEach(a => a.onchange = updateUI);
 </script>
-
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
-
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&libraries=places&callback=initAutocomplete"></script>
 </body>
 </html>
