@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fresh Cut Fields - Instant Quote</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f4f0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 500px; width: 100%; border-top: 6px solid #2d5a27; }
-        h1 { color: #2d5a27; text-align: center; margin-bottom: 5px; font-size: 28px; }
-        p.phone { text-align: center; color: #666; margin-bottom: 25px; font-size: 14px; }
-        label { display: block; margin-top: 15px; font-size: 12px; font-weight: bold; color: #444; text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
-        .price-box { background: #e8f5e9; padding: 20px; border-radius: 15px; text-align: center; display: none; margin: 15px 0; border: 1px solid #c8e6c9; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f4f0; padding: 10px; display: flex; justify-content: center; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 450px; width: 100%; border-top: 6px solid #2d5a27; margin-top: 20px; }
+        h1 { color: #2d5a27; text-align: center; margin-bottom: 5px; font-size: 24px; }
+        p.phone { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
+        label { display: block; margin-top: 15px; font-size: 11px; font-weight: bold; color: #444; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
+        .price-box { background: #e8f5e9; padding: 20px; border-radius: 15px; text-align: center; display: none; margin: 15px 0; border: 1px solid #c8e6c9; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .price-box p { margin: 0; color: #2e7d32; font-size: 14px; }
-        .price-box h2 { margin: 5px 0; color: #1b5e20; font-size: 32px; }
-        .disclaimer { font-size: 10px; color: #888; margin-top: 10px; line-height: 1.4; }
-        button { width: 100%; padding: 18px; background: #2d5a27; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
-        button:hover { background: #1e3d1a; }
+        .price-box h2 { margin: 5px 0; color: #1b5e20; font-size: 36px; font-weight: 800; }
+        .disclaimer { font-size: 10px; color: #888; margin-top: 10px; line-height: 1.4; font-style: italic; }
+        button { width: 100%; padding: 18px; background: #2d5a27; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        button:active { background: #1e3d1a; transform: scale(0.98); }
     </style>
 </head>
 <body>
@@ -26,27 +27,28 @@
     <p class="phone">Call or Text: 417-499-1916</p>
     
     <form id="quoteForm">
-        <label>Contact Info</label>
-        <input type="text" id="userName" placeholder="Your Name" required>
+        <label>Your Name</label>
+        <input type="text" id="userName" placeholder="Full Name" required>
         
         <label>Property Address</label>
-        <input type="text" id="autocomplete" placeholder="Enter Address..." required>
+        <input type="text" id="autocomplete" placeholder="Start typing address..." required>
         
         <div id="priceBox" class="price-box">
             <p id="sqftLabel"></p>
             <h2 id="priceLabel"></h2>
-            <p class="disclaimer">*Automated estimate. Final price verified on-site by the Fresh Cut Fields team.</p>
+            <p class="disclaimer">*Price covers standard mowing, trimming, and blowing. Final price confirmed upon arrival.</p>
         </div>
 
         <label>Service Type</label>
         <select id="service">
-            <option value="Mowing">Standard Mowing</option>
-            <option value="Limb Pick Up">Limb Pick Up (+ $50)</option>
-            <option value="Gutter Cleaning">Gutter Cleaning (+ $75)</option>
+            <option value="Mowing">Weekly Mowing</option>
+            <option value="BiWeekly">Bi-Weekly Mowing</option>
+            <option value="Limb">Limb Pick Up (+ $50)</option>
+            <option value="Gutter">Gutter Cleaning (+ $75)</option>
         </select>
         
-        <textarea id="notes" placeholder="Any specific details?"></textarea>
-        <button type="submit">Get Instant Quote</button>
+        <textarea id="notes" placeholder="Any special instructions? (Pets, Gates, etc.)"></textarea>
+        <button type="submit">Submit Request</button>
     </form>
 </div>
 
@@ -68,23 +70,35 @@
             const ne = bounds.getNorthEast();
             const sw = bounds.getSouthWest();
 
-            const latDist = Math.abs(ne.lat() - sw.lat()) * 111320; 
-            const lngDist = Math.abs(ne.lng() - sw.lng()) * 40075000 * Math.cos(ne.lat() * Math.PI / 180) / 360;
+            // Calculate precise distance in meters using Haversine-style logic
+            const latMid = (ne.lat() + sw.lat()) / 2.0;
+            const mPerDegLat = 111132.954 - 559.822 * Math.cos(2.0 * latMid * Math.PI / 180);
+            const mPerDegLng = 111412.84 * Math.cos(latMid * Math.PI / 180);
 
-            let viewAreaSqFt = (latDist * 3.28084) * (lngDist * 3.28084);
+            const deltaLat = Math.abs(ne.lat() - sw.lat());
+            const deltaLng = Math.abs(ne.lng() - sw.lng());
 
-            // BALANCED MATH:
-            // Assuming 45% of the viewport is actual grass to mow
-            let estimatedLawn = Math.round((viewAreaSqFt / 3.5) * 0.45);
+            const widthFt = deltaLng * mPerDegLng * 3.28084;
+            const heightFt = deltaLat * mPerDegLat * 3.28084;
 
-            // JOPLIN REALITY CHECK:
-            // Capping at 25,000 sq ft (~half acre) to prevent massive outliers
-            if (estimatedLawn > 25000) {
-                currentSqFt = 20000; 
-            } else if (estimatedLawn < 4000) {
-                currentSqFt = 6500; // Average small city lot floor
+            // Raw area of the map "box"
+            let rawArea = widthFt * heightFt;
+
+            // REFINEMENT LOGIC
+            // Standard residential lots occupy about 30% of the map viewport provided by Google
+            // We then assume 60% of that lot is actually grass (minus house/driveway)
+            let lotArea = rawArea * 0.30;
+            let grassArea = lotArea * 0.60;
+
+            // Joplin "Standard Lot" Sanity Check
+            // Typical Joplin lot is 7,000 to 10,000 sq ft. 
+            // We cap the "instant" estimate to prevent wild pricing.
+            if (grassArea > 18000) {
+                currentSqFt = 15000; // Cap for large residential
+            } else if (grassArea < 4000) {
+                currentSqFt = 6000;  // Floor for small city lot
             } else {
-                currentSqFt = estimatedLawn;
+                currentSqFt = Math.round(grassArea);
             }
 
             updatePrice();
@@ -93,28 +107,31 @@
 
     function updatePrice() {
         if (currentSqFt === 0) return;
-        
         const service = document.getElementById('service').value;
         
-        // Balanced rate: $0.008 per sq ft
-        // 7k sq ft = $56 | 10k sq ft = $80 | 15k sq ft = $120
-        let price = currentSqFt * 0.008;
+        // PRICING MODEL
+        // Base rate of $0.0075 per sq ft
+        // 7,000 sq ft (Standard) = $52.50
+        // 10,000 sq ft (Corner) = $75.00
+        let price = currentSqFt * 0.0075;
         
-        // Base Minimum of $45.00
-        if (price < 45) price = 45;
+        // Minimum Stop
+        if (price < 40) price = 40;
 
-        if (service === "Gutter Cleaning") price += 75;
-        if (service === "Limb Pick Up") price += 50;
+        // Add-ons
+        if (service === "BiWeekly") price = price * 1.25; // 25% premium for taller grass
+        if (service === "Gutter") price += 75;
+        if (service === "Limb") price += 50;
 
         document.getElementById('priceBox').style.display = 'block';
-        document.getElementById('sqftLabel').innerText = "Est. Mowable Area: " + currentSqFt.toLocaleString() + " sq ft";
+        document.getElementById('sqftLabel').innerText = "Estimated Mowable Area: " + currentSqFt.toLocaleString() + " sq ft";
         document.getElementById('priceLabel').innerText = "$" + Math.round(price);
     }
 
     document.getElementById('service').addEventListener('change', updatePrice);
     document.getElementById('quoteForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        alert("Quote Request Sent! We'll be in touch.");
+        alert("Thanks! Your quote request has been sent. We will text you shortly to confirm.");
     });
 </script>
 
