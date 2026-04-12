@@ -21,7 +21,50 @@ if (service === "Limb Pick Up") base += 50;
 return Math.round(base);
 
 };
+useEffect(() => {
+  const loadScript = () => {
+    if (document.getElementById("google-maps")) return;
 
+    const script = document.createElement("script");
+    script.id = "google-maps";
+    script.src = "https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places";
+    script.async = true;
+    script.defer = true;
+
+    script.onload = initAutocomplete;
+
+    document.body.appendChild(script);
+  };
+
+  const initAutocomplete = () => {
+    if (!window.google || !addressRef.current) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(
+      addressRef.current
+    );
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+
+      if (!place.geometry || !place.geometry.viewport) return;
+
+      const bounds = place.geometry.viewport;
+      const ne = bounds.getNorthEast();
+      const sw = bounds.getSouthWest();
+
+      const latDiff = Math.abs(ne.lat() - sw.lat());
+      const lngDiff = Math.abs(ne.lng() - sw.lng());
+
+      let totalSqFt = latDiff * lngDiff * 3.587e10;
+      let lawnSqFt = Math.round(totalSqFt * 0.6);
+
+      setSqft(lawnSqFt);
+      setPrice(calculatePrice(lawnSqFt, form.service));
+    });
+  };
+
+  loadScript();
+}, []);
 useEffect(() => { if (!window.google) return;
 
 const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current);
