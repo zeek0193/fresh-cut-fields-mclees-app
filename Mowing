@@ -1,16 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 
 export default function LawnApp() {
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    service: "Mowing",
-    notes: "",
-  });
-
   const [sqft, setSqft] = useState(null);
   const [price, setPrice] = useState(null);
+  const [service, setService] = useState("Mowing");
 
   const addressRef = useRef(null);
 
@@ -29,120 +22,57 @@ export default function LawnApp() {
 
   useEffect(() => {
     const initAutocomplete = () => {
-      try {
-        if (!window.google || !addressRef.current) return;
+      if (!window.google || !addressRef.current) return;
 
-        const autocomplete = new window.google.maps.places.Autocomplete(
-          addressRef.current
-        );
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        addressRef.current
+      );
 
-        autocomplete.addListener("place_changed", () => {
-          const place = autocomplete.getPlace();
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
 
-          if (!place.geometry || !place.geometry.viewport) return;
+        if (!place.geometry || !place.geometry.viewport) return;
 
-          const bounds = place.geometry.viewport;
-          const ne = bounds.getNorthEast();
-          const sw = bounds.getSouthWest();
+        const bounds = place.geometry.viewport;
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
 
-          const latDiff = Math.abs(ne.lat() - sw.lat());
-          const lngDiff = Math.abs(ne.lng() - sw.lng());
+        const latDiff = Math.abs(ne.lat() - sw.lat());
+        const lngDiff = Math.abs(ne.lng() - sw.lng());
 
-          let totalSqFt = latDiff * lngDiff * 3.587e10;
-          let lawnSqFt = Math.round(totalSqFt * 0.6);
+        let totalSqFt = latDiff * lngDiff * 3.587e10;
+        let lawnSqFt = Math.round(totalSqFt * 0.6);
 
-          setSqft(lawnSqFt);
-          setPrice(calculatePrice(lawnSqFt, form.service));
-        });
-      } catch (err) {
-        console.error("Autocomplete error:", err);
-      }
+        setSqft(lawnSqFt);
+        setPrice(calculatePrice(lawnSqFt, service));
+      });
     };
 
-    const loadScript = () => {
-      if (window.google) {
-        initAutocomplete();
-        return;
-      }
+    const script = document.createElement("script");
+    script.src =
+      "https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places";
+    script.async = true;
+    script.onload = initAutocomplete;
 
-      const script = document.createElement("script");
-      script.src =
-        "https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places";
-      script.async = true;
-      script.defer = true;
-
-      script.onload = initAutocomplete;
-
-      script.onerror = () => {
-        console.error("Google Maps failed to load");
-      };
-
-      document.body.appendChild(script);
-    };
-
-    loadScript();
+    document.body.appendChild(script);
   }, []);
 
-  const handleChange = (e) => {
-    const updated = { ...form, [e.target.name]: e.target.value };
-    setForm(updated);
-
-    if (sqft) {
-      setPrice(calculatePrice(sqft, updated.service));
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`Quote submitted! Estimated price: $${price || 40}`);
-  };
-
   return (
-    <div style={{ padding: 20, maxWidth: 500, margin: "auto" }}>
+    <div style={{ padding: 20 }}>
       <h1>Fresh Cut Fields and McLees</h1>
       <p>Call/Text: 417-499-1916</p>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Full Name"
-          onChange={handleChange}
-          required
-        />
+      <input ref={addressRef} placeholder="Enter your address" />
 
-        <input
-          name="phone"
-          placeholder="Phone Number"
-          onChange={handleChange}
-          required
-        />
+      {sqft && <p>Lawn Size: {sqft} sq ft</p>}
+      {price && <p>Price: ${price}</p>}
 
-        <input
-          ref={addressRef}
-          name="address"
-          placeholder="Enter your address"
-          onChange={handleChange}
-          required
-        />
-
-        {sqft && <p>Lawn Size: {sqft.toLocaleString()} sq ft</p>}
-        {price && <p>Price: ${price}</p>}
-
-        <select name="service" onChange={handleChange}>
-          <option>Mowing</option>
-          <option>Limb Pick Up</option>
-          <option>Gutter Cleaning</option>
-          <option>Landscaping</option>
-        </select>
-
-        <textarea
-          name="notes"
-          placeholder="Additional details"
-          onChange={handleChange}
-        />
-
-        <button type="submit">Get Quote</button>
-      </form>
+      <select onChange={(e) => setService(e.target.value)}>
+        <option>Mowing</option>
+        <option>Limb Pick Up</option>
+        <option>Gutter Cleaning</option>
+        <option>Landscaping</option>
+      </select>
     </div>
   );
 }
