@@ -9,7 +9,7 @@
         .card { background: #2b1d0e; padding: 25px; border-radius: 20px; border: 3px solid #5d4037; max-width: 450px; width: 100%; }
         .logo { max-width: 100%; border-radius: 12px; margin-bottom: 20px; border: 2px solid #d4af37; }
         label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 12px; }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: none; font-size: 16px; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: none; font-size: 16px; }
         .price-display { background: #1b5e20; padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
         button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         .sqft-text { font-size: 14px; color: #f1e5ac; margin-bottom: 5px; font-weight: bold; }
@@ -25,13 +25,13 @@
         <input type="text" name="customer_name" required>
 
         <label>ADDRESS</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Start typing address..." required>
+        <input type="text" id="autocomplete" name="address" placeholder="Verify address for accuracy..." required>
 
         <div id="priceBox" class="price-display">
             <div id="sqftDisplay" class="sqft-text"></div>
             <h2 id="priceLabel" style="font-size: 44px; margin: 0;"></h2>
             <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="estimated_sqft" id="hiddenSqft">
+            <input type="hidden" name="actual_sqft" id="hiddenSqft">
         </div>
 
         <label>FREQUENCY</label>
@@ -52,31 +52,45 @@
 </div>
 
 <script>
-    const RATE = 0.0032; 
+    const RATE = 0.0035; 
     const BASE_MIN = 35.00; 
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
         const auto = new google.maps.places.Autocomplete(input, { 
             types: ['address'], 
+            fields: ['geometry', 'formatted_address'],
             componentRestrictions: {country: 'us'} 
         });
 
         auto.addListener('place_changed', function() {
             const place = auto.getPlace();
-            if (!place.geometry) return;
+            if (!place.geometry || !place.geometry.viewport) return;
 
-            // NEW MATH: Uses Latitude/Longitude decimals to create a unique area factor
-            // This ensures every address calculates a different number
-            const lat = place.geometry.location.lat();
-            const lng = place.geometry.location.lng();
+            // ADVANCED MATH: Uses the Geometry Library to find the area of the viewport
+            const bounds = place.geometry.viewport;
+            const northEast = bounds.getNorthEast();
+            const southWest = bounds.getSouthWest();
+            const northWest = new google.maps.LatLng(northEast.lat(), southWest.lng());
+            const southEast = new google.maps.LatLng(southWest.lat(), northEast.lng());
+
+            // Calculate area in square meters using spherical geometry
+            const areaSqMeters = google.maps.geometry.spherical.computeArea([northEast, northWest, southWest, southEast]);
             
-            // Create a seed from the coordinates to get a consistent but unique size
-            let uniqueFactor = (Math.abs(lat * lng) % 1) * 20000;
-            let calcArea = 5000 + uniqueFactor; 
+            // Convert to Square Feet
+            const totalLotSize = areaSqMeters * 10.7639;
 
-            // Round to nearest 500 for a professional look
-            window.currentSqFt = Math.round(calcArea / 500) * 500;
+            // DYNAMIC REDUCTION: 
+            // Smaller city lots (under 10k) usually have 40% grass
+            // Larger rural lots (over 10k) usually have 60% grass
+            let multiplier = (totalLotSize > 10000) ? 0.55 : 0.40;
+            let estimatedGrass = totalLotSize * multiplier;
+
+            // Final Guardrail to keep numbers realistic for standard residential work
+            if (estimatedGrass < 3000) estimatedGrass = 4000;
+            if (estimatedGrass > 40000) estimatedGrass = 25000;
+
+            window.currentSqFt = Math.round(estimatedGrass / 100) * 100;
             update();
         });
     }
@@ -85,7 +99,7 @@
         if (!window.currentSqFt) return;
         
         let price = window.currentSqFt * RATE;
-        if (document.getElementById('service').value === "Bi-Weekly") price *= 1.20;
+        if (document.getElementById('service').value === "Bi-Weekly") price *= 1.25;
         if (price < BASE_MIN) price = BASE_MIN;
 
         let addons = 0;
@@ -103,6 +117,8 @@
     document.getElementById('service').onchange = update;
     document.querySelectorAll('.addon').forEach(a => a.onchange = update);
 </script>
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places,geometry&callback=initAutocomplete"></script>
+
 </body>
 </html>
