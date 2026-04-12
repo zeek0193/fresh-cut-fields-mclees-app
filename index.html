@@ -13,6 +13,8 @@
         .price-display { background: #1b5e20; padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
         button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; }
         .sqft-text { font-size: 14px; color: #f1e5ac; margin-bottom: 5px; font-weight: bold; }
+        /* Hidden canvas for satellite analysis */
+        #analysisCanvas { display: none; }
     </style>
 </head>
 <body>
@@ -25,13 +27,13 @@
         <input type="text" name="customer_name" required>
 
         <label>ADDRESS</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Enter address..." required>
+        <input type="text" id="autocomplete" name="address" placeholder="Calculating lawn from satellite..." required>
 
         <div id="priceBox" class="price-display">
-            <div id="sqftDisplay" class="sqft-text"></div>
-            <h2 id="priceLabel" style="font-size: 44px; margin: 0;"></h2>
+            <div id="sqftDisplay" class="sqft-text">ANALYZING GREENERY...</div>
+            <h2 id="priceLabel" style="font-size: 44px; margin: 0;">--</h2>
             <input type="hidden" name="quote_price" id="hiddenPrice">
-            <input type="hidden" name="calculated_sqft" id="hiddenSqft">
+            <input type="hidden" name="satellite_sqft" id="hiddenSqft">
         </div>
 
         <label>SERVICE</label>
@@ -51,15 +53,18 @@
     </form>
 </div>
 
+<canvas id="analysisCanvas" width="300" height="300"></canvas>
+
 <script>
+    const API_KEY = 'AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk'; // Your Google API Key
     const RATE = 0.0038; 
-    const BASE_MIN = 35.00; 
+    const BASE_MIN = 35.00;
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
         const auto = new google.maps.places.Autocomplete(input, { 
             types: ['address'], 
-            fields: ['geometry'],
+            fields: ['geometry', 'formatted_address'],
             componentRestrictions: {country: 'us'} 
         });
 
@@ -67,22 +72,53 @@
             const place = auto.getPlace();
             if (!place.geometry) return;
 
-            // NEW COMPLEX LOGIC:
-            // We take the specific Latitude and Longitude (which are different for every house)
+            document.getElementById('priceBox').style.display = 'block';
+            document.getElementById('sqftDisplay').innerText = "SCANNING SATELLITE...";
+
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
             
-            // This math creates a unique "Hash" number for that specific spot on earth
-            // It ensures neighbor A and neighbor B get different results
-            let pseudoRandom = Math.abs(Math.sin(lat) * 10000 + Math.cos(lng) * 10000);
-            let fractional = pseudoRandom - Math.floor(pseudoRandom);
-            
-            // This spreads the lawn sizes between 4,500 and 18,500 sq ft
-            let finalSqFt = 4500 + (fractional * 14000);
-
-            window.currentSqFt = Math.round(finalSqFt / 250) * 250;
-            update();
+            analyzeSatellite(lat, lng);
         });
+    }
+
+    function analyzeSatellite(lat, lng) {
+        const canvas = document.getElementById('analysisCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const img = new Image();
+        
+        // Fetch a high-res satellite image centered on the home
+        img.crossOrigin = "Anonymous";
+        img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
+
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+            const imgData = ctx.getImageData(0, 0, 300, 300).data;
+            let greenPixels = 0;
+
+            // Loop through pixels and count "Green-dominant" ones (Grass/Trees)
+            for (let i = 0; i < imgData.length; i += 4) {
+                const r = imgData[i];
+                const g = imgData[i + 1];
+                const b = imgData[i + 2];
+                
+                // Detection logic for green grass vs gray pavement/brown roofs
+                if (g > r && g > b && g > 40) {
+                    greenPixels++;
+                }
+            }
+
+            // Convert pixel count to approximate Sq Ft (Zoom 20 specific ratio)
+            const ratio = 0.15; 
+            let detectedSqFt = greenPixels * ratio;
+
+            // Filter out extreme errors
+            if (detectedSqFt < 3500) detectedSqFt = 4500;
+            if (detectedSqFt > 30000) detectedSqFt = 22000;
+
+            window.currentSqFt = Math.round(detectedSqFt / 250) * 250;
+            update();
+        };
     }
 
     function update() {
@@ -97,8 +133,7 @@
         
         const total = Math.round(price + addons);
         
-        document.getElementById('priceBox').style.display = 'block';
-        document.getElementById('sqftDisplay').innerText = "EST. LAWN: " + window.currentSqFt.toLocaleString() + " SQ FT";
+        document.getElementById('sqftDisplay').innerText = "SATELLITE EST: " + window.currentSqFt.toLocaleString() + " SQ FT";
         document.getElementById('priceLabel').innerText = "$" + total;
         document.getElementById('hiddenPrice').value = "$" + total;
         document.getElementById('hiddenSqft').value = window.currentSqFt;
