@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A to Z Blade Runners Quote</title>
+    <title>Fresh Cut Fields & McLees</title>
     <style>
         body { background: #1a1a1a; font-family: sans-serif; color: #fff; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .card { background: #2b1d0e; padding: 25px; border-radius: 20px; border: 3px solid #5d4037; max-width: 450px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -11,8 +11,8 @@
         label { display: block; margin-top: 15px; color: #d4af37; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         input, select { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #5d4037; font-size: 16px; background: #fff; color: #333; }
         .price-display { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
-        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
+        button { width: 100%; padding: 18px; background: #2d5a27; color: #fff; border: 2px solid #d4af37; border-radius: 12px; font-size: 20px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+        button:disabled { background: #444; border-color: #666; cursor: not-allowed; opacity: 0.7; }
         #analysisCanvas { display: none; }
     </style>
 </head>
@@ -21,23 +21,32 @@
 <img src="IMG_20260325_165435.jpg" class="logo">
 
 <div class="card">
-    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
-        <label>Name</label>
-        <input type="text" name="name" required>
+    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="quoteForm">
+        
+        <label>Full Name</label>
+        <input type="text" name="customer_name" placeholder="Name" required>
 
-        <label>Phone</label>
-        <input type="tel" name="phone" required>
+        <label>Phone Number</label>
+        <input type="tel" name="phone_number" placeholder="417-000-0000" required>
 
-        <label>Address</label>
-        <input type="text" id="autocomplete" name="address" placeholder="Enter address..." required>
+        <label>Service Address</label>
+        <input type="text" id="autocomplete" name="service_address" placeholder="Enter address for scan..." required>
 
         <div id="priceBox" class="price-display">
-            <h2 id="priceLabel" style="font-size: 40px; margin: 0;">Calculating...</h2>
-            <input type="hidden" name="quote_total" id="hiddenPrice">
-            <input type="hidden" name="area_sqft" id="hiddenSqft">
+            <div id="statusText" style="font-size: 12px; color: #f1e5ac; margin-bottom: 5px;">SATELLITE ANALYSIS IN PROGRESS...</div>
+            <h2 id="priceLabel" style="font-size: 44px; margin: 0;">--</h2>
+            
+            <input type="hidden" name="calculated_price" id="hiddenPrice">
+            <input type="hidden" name="detected_sqft" id="hiddenSqft">
         </div>
 
-        <button type="submit" id="submitBtn" disabled>Select Address First</button>
+        <label>Mowing Frequency</label>
+        <select name="mowing_schedule" id="service">
+            <option value="Weekly">Weekly Mowing</option>
+            <option value="Bi-Weekly">Bi-Weekly Mowing</option>
+        </select>
+
+        <button type="submit" id="submitBtn" disabled>Enter Address to Start</button>
     </form>
 </div>
 
@@ -45,59 +54,93 @@
 
 <script>
     const API_KEY = 'AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk'; 
-    const RATE = 0.0035;
+    const RATE_PER_SQFT = 0.0035; // Adjust this to change your base pricing
 
     function initAutocomplete() {
         const input = document.getElementById('autocomplete');
-        const auto = new google.maps.places.Autocomplete(input, { types: ['address'] });
+        const auto = new google.maps.places.Autocomplete(input, { 
+            types: ['address'], 
+            componentRestrictions: {country: 'us'} 
+        });
 
         auto.addListener('place_changed', function() {
             const place = auto.getPlace();
             if (!place.geometry) return;
 
+            // Show price box and update button status
             document.getElementById('priceBox').style.display = 'block';
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('submitBtn').innerText = "Analyzing Property...";
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Scanning Property...";
+            btn.disabled = true;
 
             const lat = place.geometry.location.lat();
             const lng = place.geometry.location.lng();
-            analyzeLawn(lat, lng);
+            
+            performSatelliteAnalysis(lat, lng);
         });
     }
 
-    function analyzeLawn(lat, lng) {
+    function performSatelliteAnalysis(lat, lng) {
         const canvas = document.getElementById('analysisCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         const img = new Image();
+        
         img.crossOrigin = "Anonymous";
+        // Fetches a top-down satellite view of the property
         img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
 
         img.onload = function() {
             ctx.drawImage(img, 0, 0);
-            const pixels = ctx.getImageData(0, 0, 300, 300).data;
-            let greenCount = 0;
+            const imageData = ctx.getImageData(0, 0, 300, 300).data;
+            let grassPixels = 0;
 
-            for (let i = 0; i < pixels.length; i += 4) {
-                if (pixels[i+1] > pixels[i] && pixels[i+1] > pixels[i+2]) greenCount++;
+            // Loop through pixels: R, G, B, A
+            for (let i = 0; i < imageData.length; i += 4) {
+                const r = imageData[i];
+                const g = imageData[i + 1];
+                const b = imageData[i + 2];
+                // If Green is the dominant color, count it as grass
+                if (g > r && g > b && g > 50) {
+                    grassPixels++;
+                }
             }
 
-            const sqft = Math.max(4000, Math.round((greenCount * 0.17) / 100) * 100);
-            const price = Math.round(sqft * RATE);
-
-            document.getElementById('priceLabel').innerText = "$" + price;
-            document.getElementById('hiddenPrice').value = "$" + price;
-            document.getElementById('hiddenSqft').value = sqft + " sqft";
+            // Math to convert green pixels into estimated Sq Ft
+            let sqft = grassPixels * 0.17; 
             
-            // ONLY enable button once hidden fields are filled
-            document.getElementById('submitBtn').disabled = false;
-            document.getElementById('submitBtn').innerText = "Submit Quote Request";
-        };
-
-        img.onerror = function() {
-            alert("Satellite scan blocked. Check Google Cloud restrictions.");
+            // Keeps estimates within realistic Joplin residential bounds (3.5k - 30k sqft)
+            window.currentSqFt = Math.max(3500, Math.min(30000, Math.round(sqft / 250) * 250));
+            
+            updatePriceDisplay();
+            
+            // Re-enable the submit button
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Submit Quote Request";
+            btn.disabled = false;
         };
     }
+
+    function updatePriceDisplay() {
+        if (!window.currentSqFt) return;
+        
+        let price = window.currentSqFt * RATE_PER_SQFT;
+        // Add 25% premium for Bi-Weekly service
+        if (document.getElementById('service').value === "Bi-Weekly") price *= 1.25;
+        
+        const finalPrice = Math.round(price);
+        
+        document.getElementById('statusText').innerText = "EST. LAWN: " + window.currentSqFt.toLocaleString() + " SQ FT";
+        document.getElementById('priceLabel').innerText = "$" + finalPrice;
+        
+        // Push values to hidden inputs so Getform/Forminit can see them
+        document.getElementById('hiddenPrice').value = "$" + finalPrice;
+        document.getElementById('hiddenSqft').value = window.currentSqFt;
+    }
+
+    document.getElementById('service').onchange = updatePriceDisplay;
 </script>
+
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
 </body>
 </html>
