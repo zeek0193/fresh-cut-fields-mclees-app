@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fresh Cut Fields & McLees</title>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
     body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
     .logo-box { text-align:center; margin-bottom:20px; }
@@ -15,6 +16,10 @@
     .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
     .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; color: #fff; }
     .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; }
+    
+    /* Center reCAPTCHA */
+    .g-recaptcha { margin: 15px 0; display: flex; justify-content: center; }
+
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
     button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
     .trap { display: none !important; }
@@ -66,6 +71,8 @@
                 <span>Bug Spray (+$30)</span>
             </div>
         </div>
+
+        <div class="g-recaptcha" data-sitekey="6Ldwa7QsAAAAANHYYXOxGPxTi5dvfoqStOZLzXFt0"></div>
 
         <button type="submit" id="submitBtn" disabled>Enter Address First</button>
     </form>
@@ -127,10 +134,16 @@ document.querySelectorAll(".addon").forEach(checkbox => {
     checkbox.onchange = update;
 });
 
-// NEW SUBMISSION LOGIC: No Redirect
 document.getElementById('mainForm').onsubmit = function(e) {
-    e.preventDefault(); // Stop the redirect
+    e.preventDefault();
     
+    // Check if reCAPTCHA is completed
+    const captchaResponse = grecaptcha.getResponse();
+    if (!captchaResponse) {
+        alert("Please complete the reCAPTCHA.");
+        return;
+    }
+
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
     btn.innerText = "Sending...";
