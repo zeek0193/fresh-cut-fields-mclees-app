@@ -9,7 +9,7 @@
     .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; text-align: center; }
     
     /* Logo Styling */
-    .logo { width: 120px; height: 120px; margin-bottom: 15px; border-radius: 50%; border: 2px solid #d4af37; object-fit: cover; }
+    .logo { width: 100%; max-width: 400px; height: auto; margin-bottom: 20px; border-radius: 10px; border: 2px solid #d4af37; object-fit: contain; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
     
     label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; text-align: left; }
     input { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; font-size: 16px; }
@@ -25,9 +25,9 @@
 <body>
 
 <div class="card">
-    <img src="YOUR_LOGO_URL_HERE" alt="Fresh Cut Fields & McLees Logo" class="logo">
+    <img src="YOUR_UPLOADED_LOGO_URL_HERE" alt="Fresh Cut Fields & McLees Logo" class="logo">
     
-    <h2 style="color:#d4af37; margin-top: 0;">Fresh Cut Fields & McLees</h2>
+    <h2 style="color:#d4af37; margin-top: 0; display:none;">Fresh Cut Fields & McLees</h2>
     
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
         <label>Name</label>
