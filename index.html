@@ -9,7 +9,9 @@
     <style>
         body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
         .logo-box { text-align:center; margin-bottom:20px; }
-        .logo-box img { width:350px; max-width:100%; border-radius:12px; border:2px solid #d4af37; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        /* Adjusted logo size for better fit */
+        .logo-box img { width:400px; max-width:100%; border-radius:12px; border:2px solid #d4af37; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        
         .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
@@ -42,9 +44,7 @@
 <body>
 
 <div class="logo-box">
-    <img src="https://i.ibb.co/S7Vn5G7W/3-DE0-A951-1-A1-A-4-CB7-8-D6-E-9481-B2-A8356-E.jpg" alt="Fresh Cut Fields & McLees Logo">
-    <h1 style="color:#d4af37; margin-bottom:5px;">Fresh Cut Fields & McLees</h1>
-    <p style="margin-top:0; color:#aaa; font-size: 14px;">Premium Professional Lawn Care</p>
+    <img src="https://i.ibb.co/5248.jpg" alt="Fresh Cut Fields & McLees">
 </div>
 
 <div class="card">
@@ -63,14 +63,14 @@
         <div id="priceBox" class="price-box">
             <p style="margin:0; font-size:12px; text-transform:uppercase; color:#d4af37;">Estimated Quote</p>
             <h2 id="priceLabel" style="font-size: 50px; margin: 5px 0;">$--</h2>
-            <p id="sqftDisplay" style="margin:0; font-size:11px; opacity:0.8;">Analyzing...</p>
+            <p id="sqftDisplay" style="margin:0; font-size:11px; opacity:0.8;">Analyzing Property...</p>
             <input type="hidden" name="Quote_Total" id="hiddenPrice">
             <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
         </div>
 
         <label>Mowing Frequency</label>
         <select name="Frequency" id="service">
-            <option value="Weekly">Weekly (Standard)</option>
+            <option value="Weekly">Weekly (Recommended)</option>
             <option value="Bi-Weekly">Bi-Weekly (+35%)</option>
         </select>
 
@@ -128,16 +128,18 @@ function analyze(lat, lng) {
         let grassPixels = 0;
         for(let i = 0; i < data.length; i += 4) {
             const r = data[i], g = data[i+1], b = data[i+2];
+            // Identify green space dominant over red/blue
             if(g > r * 1.15 && g > b * 1.15 && g > 70) grassPixels++;
         }
 
+        // Logic to calculate lawn area
         window.sqft = Math.round(Math.max(2500, Math.min(40000, grassPixels * 0.4)));
         
         update();
         document.getElementById("priceBox").style.display = "block";
         document.getElementById("submitBtn").disabled = false;
         document.getElementById("submitBtn").innerText = "Submit Quote Request";
-        document.getElementById("sqftDisplay").innerText = "Estimated Area: " + window.sqft.toLocaleString() + " sqft";
+        document.getElementById("sqftDisplay").innerText = "Estimated Turf: " + window.sqft.toLocaleString() + " sqft";
     };
 }
 
@@ -147,10 +149,12 @@ function update() {
     let price = BASE_FEE;
     price += (window.sqft * RATE_PER_SQFT);
 
+    // Bi-Weekly surcharge
     if (document.getElementById("service").value === "Bi-Weekly") {
         price *= 1.35; 
     }
 
+    // Process checkboxes
     document.querySelectorAll(".addon:checked").forEach(addon => {
         price += parseFloat(addon.dataset.price);
     });
