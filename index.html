@@ -69,22 +69,22 @@
         <label>Mowing Frequency</label>
         <select name="Frequency" id="service">
             <option value="Weekly">Weekly (Standard)</option>
-            <option value="Bi-Weekly">Bi-Weekly (+35%)</option>
+            <option value="Bi-Weekly">Bi-Weekly (+25%)</option>
         </select>
 
         <label>Add-Ons</label>
         <div class="addon-section">
             <div class="addon-item">
-                <input type="checkbox" class="addon" name="Limb_Pickup" data-price="35">
-                <span>Limb Pickup (+$35)</span>
+                <input type="checkbox" class="addon" name="Limb_Pickup" data-price="45">
+                <span>Limb Pickup (+$30)</span>
             </div>
             <div class="addon-item">
-                <input type="checkbox" class="addon" name="Flea_Tick" data-price="25">
+                <input type="checkbox" class="addon" name="Flea_Tick" data-price="65">
                 <span>Flea & Tick (+$25)</span>
             </div>
             <div class="addon-item">
-                <input type="checkbox" class="addon" name="Bug_Spray" data-price="20">
-                <span>Spray the House (+$20)</span>
+                <input type="checkbox" class="addon" name="Bug_Spray" data-price="55">
+                <span>Bug Spray (+$20)</span>
             </div>
         </div>
 
@@ -98,8 +98,8 @@
 
 <script>
 const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk"; 
-const BASE_FEE = 40.00;    
-const RATE_PER_SQFT = 0.008; 
+const BASE_FEE = 40.00;    // The base "show-up" price
+const RATE_PER_SQFT = 0.009; // $80 per 10k sqft additional
 
 function initAutocomplete(){
     const input = document.getElementById("autocomplete");
@@ -129,6 +129,7 @@ function analyze(lat, lng) {
             if(g > r * 1.15 && g > b * 1.15 && g > 70) grassPixels++;
         }
 
+        // Calculate SQFT with a realistic minimum
         window.sqft = Math.round(Math.max(2500, Math.min(40000, grassPixels * 0.4)));
         
         update();
@@ -142,13 +143,19 @@ function analyze(lat, lng) {
 function update() {
     if(!window.sqft) return;
 
+    // Start with the $40 Base Fee
     let price = BASE_FEE;
+
+    // Add square footage cost (e.g., first 2500 sqft is covered by base, or added on top)
+    // Here, we add the rate to the base for every sqft found.
     price += (window.sqft * RATE_PER_SQFT);
 
+    // Apply Bi-Weekly Surcharge
     if (document.getElementById("service").value === "Bi-Weekly") {
         price *= 1.35; 
     }
 
+    // Add Add-ons
     document.querySelectorAll(".addon:checked").forEach(addon => {
         price += parseFloat(addon.dataset.price);
     });
