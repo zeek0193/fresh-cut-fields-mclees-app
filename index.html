@@ -4,77 +4,65 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fresh Cut Fields & McLees</title>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
-<style>
-    body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
-    .logo-box { text-align:center; margin-bottom:20px; }
-    .logo-box img { width:350px; max-width:100%; border-radius:12px; border:2px solid #d4af37; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; }
-    label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
-    input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; font-size: 16px; }
-    .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
-    .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
-    .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; color: #fff; }
-    .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; }
-    
-    /* Center reCAPTCHA */
-    .g-recaptcha { margin: 15px 0; display: flex; justify-content: center; }
 
-    button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
-    button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
-    .trap { display: none !important; }
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<style>
+body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
+.logo-box { text-align:center; margin-bottom:20px; }
+.logo-box img { width:350px; max-width:100%; border-radius:12px; border:2px solid #d4af37; }
+.card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; }
+label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight:bold; }
+input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; }
+.price-box { background:#1b5e20; padding:20px; border-radius:15px; text-align:center; margin:15px 0; display:none; }
+button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border:2px solid #d4af37; border-radius:12px; }
+button:disabled { background:#444; }
 </style>
 </head>
+
 <body>
 
 <div class="logo-box">
-    <img src="IMG_20260325_165435.jpg" alt="Fresh Cut Fields & McLees Logo">
+    <img src="IMG_20260325_165435.jpg">
+    <p>Call/Text: 417-499-1916</p>
 </div>
 
 <div class="card">
-    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
-        <label>Name</label>
-        <input type="text" name="Name" required>
+<form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
 
-        <label>Phone</label>
-        <input type="tel" name="Phone" required>
+<label>Name</label>
+<input type="text" name="Name" required>
 
-        <label>Address</label>
-        <input type="text" id="autocomplete" name="Address" required placeholder="Enter your address...">
+<label>Phone</label>
+<input type="tel" name="Phone" required>
 
-        <input type="text" name="_gotcha" class="trap" tabindex="-1" autocomplete="off">
+<label>Address</label>
+<input type="text" id="autocomplete" name="Address" required>
 
-        <div id="priceBox" class="price-box">
-            <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
-            <input type="hidden" name="Quote_Total" id="hiddenPrice">
-            <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
-        </div>
+<div id="priceBox" class="price-box">
+    <h2 id="priceLabel">$--</h2>
+    <input type="hidden" name="Quote_Total" id="hiddenPrice">
+    <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
+</div>
 
-        <label>Mowing Frequency</label>
-        <select name="Frequency" id="service">
-            <option value="Weekly">Weekly</option>
-            <option value="Bi-Weekly">Bi-Weekly (+25%)</option>
-        </select>
+<label>Frequency</label>
+<select name="Frequency" id="service">
+<option value="Weekly">Weekly</option>
+<option value="Bi-Weekly">Bi-Weekly</option>
+</select>
 
-        <label>Add-Ons</label>
-        <div class="addon-section">
-            <div class="addon-item">
-                <input type="checkbox" class="addon" name="Limb_Pickup" data-price="50">
-                <span>Limb Pickup (+$50)</span>
-            </div>
-            <div class="addon-item">
-                <input type="checkbox" class="addon" name="Flea_Tick" data-price="35">
-                <span>Flea & Tick (+$35)</span>
-            </div>
-            <div class="addon-item">
-                <input type="checkbox" class="addon" name="Bug_Spray" data-price="30">
-                <span>Bug Spray (+$30)</span>
-            </div>
-        </div><div class="g-recaptcha" data-sitekey="6Ldwa7QsAAAAANHYYOxGPxTi5dvfoqStOZLzXFt0"></div>
+<label>Add-Ons</label>
+<div>
+<input type="checkbox" class="addon" name="Limb_Pickup" data-price="50"> Limb Pickup (+$50)<br>
+<input type="checkbox" class="addon" name="Flea_Tick" data-price="35"> Flea & Tick (+$35)<br>
+<input type="checkbox" class="addon" name="Bug_Spray" data-price="30"> Bug Spray (+$30)
+</div>
 
+<div class="g-recaptcha" data-sitekey="6Ldwa7QsAAAAANHYYOxGPxTi5dvfoqStOZLzXFt0"></div>
 
-        <button type="submit" id="submitBtn" disabled>Enter Address First</button>
-    </form>
+<button type="submit" id="submitBtn" disabled>Enter Address First</button>
+
+</form>
 </div>
 
 <canvas id="canvas" width="300" height="300" style="display:none;"></canvas>
@@ -86,10 +74,12 @@ const RATE = 0.0045;
 function initAutocomplete(){
     const input = document.getElementById("autocomplete");
     const auto = new google.maps.places.Autocomplete(input);
+
     auto.addListener("place_changed", ()=>{
         const place = auto.getPlace();
         if(!place.geometry) return;
-        document.getElementById("submitBtn").innerText = "Analyzing Satellite...";
+
+        document.getElementById("submitBtn").innerText = "Analyzing...";
         analyze(place.geometry.location.lat(), place.geometry.location.lng());
     });
 }
@@ -98,84 +88,64 @@ function analyze(lat,lng){
     const img = new Image();
     img.crossOrigin="Anonymous";
     img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;
+
     img.onload = ()=>{
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img,0,0);
+
         const data = ctx.getImageData(0,0,300,300).data;
         let grass=0;
+
         for(let i=0;i<data.length;i+=4){
-            if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70) grass++;
+            if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70){
+                grass++;
+            }
         }
+
         window.sqft = Math.round(Math.max(3000, Math.min(20000, grass * 0.35)));
+
         update();
+
         document.getElementById("priceBox").style.display = "block";
         document.getElementById("submitBtn").disabled = false;
-        document.getElementById("submitBtn").innerText = "Submit Quote Request";
+        document.getElementById("submitBtn").innerText = "Submit Quote";
     };
 }
 
 function update(){
     if(!window.sqft) return;
+
     let price = window.sqft * RATE;
-    if(document.getElementById("service").value==="Bi-Weekly") price *= 1.25;
-    document.querySelectorAll(".addon:checked").forEach(addon => {
-        price += parseFloat(addon.dataset.price);
+
+    if(document.getElementById("service").value==="Bi-Weekly"){
+        price *= 1.25;
+    }
+
+    document.querySelectorAll(".addon:checked").forEach(a=>{
+        price += parseFloat(a.dataset.price);
     });
+
     price = Math.round(price);
+
     document.getElementById("priceLabel").innerText = "$" + price;
     document.getElementById("hiddenPrice").value = "$" + price;
     document.getElementById("hiddenSqft").value = window.sqft;
 }
 
 document.getElementById("service").onchange = update;
-document.querySelectorAll(".addon").forEach(checkbox => {
-    checkbox.onchange = update;
-});
+document.querySelectorAll(".addon").forEach(a=>a.onchange=update);
+
+/*
+❌ DISABLED SUBMIT (for Getform activation)
 
 document.getElementById('mainForm').onsubmit = function(e) {
     e.preventDefault();
-    
-    // Check if reCAPTCHA is completed
-    const captchaResponse = grecaptcha.getResponse();
-    if (!captchaResponse) {
-        alert("Please complete the reCAPTCHA.");
-        return;
-    }
-
-    const btn = document.getElementById("submitBtn");
-    btn.disabled = true;
-    btn.innerText = "Sending...";
-
-    const formData = new FormData(this);
-
-    fetch("https://getform.io/f/m56kua56s1k", {
-        method: "POST",
-        body: formData,
-        headers: {
-            "Accept": "application/json",
-        },
-    })
-    .then(response => {
-        if (response.ok) {
-            btn.innerText = "Sent Successfully!";
-            btn.style.background = "#1b5e20";
-        } else {
-            btn.innerText = "Error Sending";
-            btn.disabled = false;
-        }
-    })
-    .catch(error => {
-        btn.innerText = "Error Sending";
-        btn.disabled = false;
-    });
 };
+*/
 </script>
+
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
+
 </body>
 </html>
-
-
-
-
-
