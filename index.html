@@ -11,15 +11,10 @@
     .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; }
     label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
     input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; font-size: 16px; }
-    
-    /* Price Box Styling */
     .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; display: none; border: 2px solid #d4af37; }
-    
-    /* Add-On Section Styling */
     .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
     .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; color: #fff; }
     .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; }
-    
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
     button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
     .trap { display: none !important; }
@@ -32,8 +27,7 @@
 </div>
 
 <div class="card">
-    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
-
+    <form id="mainForm">
         <label>Name</label>
         <input type="text" name="Name" required>
 
@@ -46,9 +40,7 @@
         <input type="text" name="_gotcha" class="trap" tabindex="-1" autocomplete="off">
 
         <div id="priceBox" class="price-box">
-            <div id="sqftText" style="font-size: 12px; color: #f1e5ac;">SCANNING...</div>
             <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
-            
             <input type="hidden" name="Quote_Total" id="hiddenPrice">
             <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
         </div>
@@ -91,7 +83,6 @@ function initAutocomplete(){
     auto.addListener("place_changed", ()=>{
         const place = auto.getPlace();
         if(!place.geometry) return;
-        document.getElementById("priceBox").style.display = "block";
         document.getElementById("submitBtn").innerText = "Analyzing Satellite...";
         analyze(place.geometry.location.lat(), place.geometry.location.lng());
     });
@@ -112,6 +103,7 @@ function analyze(lat,lng){
         }
         window.sqft = Math.round(Math.max(3000, Math.min(20000, grass * 0.35)));
         update();
+        document.getElementById("priceBox").style.display = "block";
         document.getElementById("submitBtn").disabled = false;
         document.getElementById("submitBtn").innerText = "Submit Quote Request";
     };
@@ -119,38 +111,52 @@ function analyze(lat,lng){
 
 function update(){
     if(!window.sqft) return;
-    
-    // Calculate base price based on sqft
     let price = window.sqft * RATE;
-    
-    // Add 25% for Bi-Weekly service
     if(document.getElementById("service").value==="Bi-Weekly") price *= 1.25;
-    
-    // Add selected Add-Ons
     document.querySelectorAll(".addon:checked").forEach(addon => {
         price += parseFloat(addon.dataset.price);
     });
-
     price = Math.round(price);
-    
-    document.getElementById("sqftText").innerText = "Est Lawn: " + window.sqft.toLocaleString() + " sq ft";
     document.getElementById("priceLabel").innerText = "$" + price;
-    
     document.getElementById("hiddenPrice").value = "$" + price;
     document.getElementById("hiddenSqft").value = window.sqft;
 }
 
-// Update price whenever a selection changes
 document.getElementById("service").onchange = update;
 document.querySelectorAll(".addon").forEach(checkbox => {
     checkbox.onchange = update;
 });
 
-document.getElementById('mainForm').onsubmit = function() {
-    if (!document.getElementById("hiddenPrice").value) {
-        alert("Please wait for the scan to finish.");
-        return false;
-    }
+// NEW SUBMISSION LOGIC: No Redirect
+document.getElementById('mainForm').onsubmit = function(e) {
+    e.preventDefault(); // Stop the redirect
+    
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+
+    const formData = new FormData(this);
+
+    fetch("https://getform.io/f/m56kua56s1k", {
+        method: "POST",
+        body: formData,
+        headers: {
+            "Accept": "application/json",
+        },
+    })
+    .then(response => {
+        if (response.ok) {
+            btn.innerText = "Sent Successfully!";
+            btn.style.background = "#1b5e20";
+        } else {
+            btn.innerText = "Error Sending";
+            btn.disabled = false;
+        }
+    })
+    .catch(error => {
+        btn.innerText = "Error Sending";
+        btn.disabled = false;
+    });
 };
 </script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>
