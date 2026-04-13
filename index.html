@@ -9,6 +9,7 @@
     <style>
         body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
         .logo-box { text-align:center; margin-bottom:20px; }
+        .logo-box img { width:350px; max-width:100%; border-radius:12px; border:2px solid #d4af37; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
@@ -41,6 +42,7 @@
 <body>
 
 <div class="logo-box">
+    <img src="https://i.ibb.co/S7Vn5G7W/3-DE0-A951-1-A1-A-4-CB7-8-D6-E-9481-B2-A8356-E.jpg" alt="Fresh Cut Fields & McLees Logo">
     <h1 style="color:#d4af37; margin-bottom:5px;">Fresh Cut Fields & McLees</h1>
     <p style="margin-top:0; color:#aaa; font-size: 14px;">Premium Professional Lawn Care</p>
 </div>
@@ -69,22 +71,22 @@
         <label>Mowing Frequency</label>
         <select name="Frequency" id="service">
             <option value="Weekly">Weekly (Standard)</option>
-            <option value="Bi-Weekly">Bi-Weekly (+25%)</option>
+            <option value="Bi-Weekly">Bi-Weekly (+35%)</option>
         </select>
 
         <label>Add-Ons</label>
         <div class="addon-section">
             <div class="addon-item">
-                <input type="checkbox" class="addon" name="Limb_Pickup" data-price="45">
-                <span>Limb Pickup (+$30)</span>
+                <input type="checkbox" class="addon" name="Limb_Pickup" data-price="35">
+                <span>Limb Pickup (+$35)</span>
             </div>
             <div class="addon-item">
-                <input type="checkbox" class="addon" name="Flea_Tick" data-price="65">
+                <input type="checkbox" class="addon" name="Flea_Tick" data-price="25">
                 <span>Flea & Tick (+$25)</span>
             </div>
             <div class="addon-item">
-                <input type="checkbox" class="addon" name="Bug_Spray" data-price="55">
-                <span>Bug Spray (+$20)</span>
+                <input type="checkbox" class="addon" name="Bug_Spray" data-price="20">
+                <span>Spray the House (+$20)</span>
             </div>
         </div>
 
@@ -98,8 +100,8 @@
 
 <script>
 const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk"; 
-const BASE_FEE = 40.00;    // The base "show-up" price
-const RATE_PER_SQFT = 0.009; // $80 per 10k sqft additional
+const BASE_FEE = 40.00;    
+const RATE_PER_SQFT = 0.009; 
 
 function initAutocomplete(){
     const input = document.getElementById("autocomplete");
@@ -129,7 +131,6 @@ function analyze(lat, lng) {
             if(g > r * 1.15 && g > b * 1.15 && g > 70) grassPixels++;
         }
 
-        // Calculate SQFT with a realistic minimum
         window.sqft = Math.round(Math.max(2500, Math.min(40000, grassPixels * 0.4)));
         
         update();
@@ -143,19 +144,13 @@ function analyze(lat, lng) {
 function update() {
     if(!window.sqft) return;
 
-    // Start with the $40 Base Fee
     let price = BASE_FEE;
-
-    // Add square footage cost (e.g., first 2500 sqft is covered by base, or added on top)
-    // Here, we add the rate to the base for every sqft found.
     price += (window.sqft * RATE_PER_SQFT);
 
-    // Apply Bi-Weekly Surcharge
     if (document.getElementById("service").value === "Bi-Weekly") {
         price *= 1.35; 
     }
 
-    // Add Add-ons
     document.querySelectorAll(".addon:checked").forEach(addon => {
         price += parseFloat(addon.dataset.price);
     });
@@ -174,7 +169,7 @@ document.querySelectorAll(".addon").forEach(checkbox => {
 
 document.getElementById('mainForm').onsubmit = function(e) {
     e.preventDefault();
-    if (!grecaptcha.getResponse()) {
+    if (typeof grecaptcha !== 'undefined' && !grecaptcha.getResponse()) {
         alert("Please complete the reCAPTCHA.");
         return;
     }
