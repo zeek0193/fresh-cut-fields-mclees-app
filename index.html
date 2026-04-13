@@ -6,11 +6,15 @@
 <title>Fresh Cut Fields & McLees</title>
 <style>
     body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
-    .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; }
-    label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
+    .card { background:#2b1d0e; padding:25px; border-radius:20px; border:3px solid #5d4037; max-width:450px; width:100%; text-align: center; }
+    
+    /* Logo Styling */
+    .logo { width: 120px; height: 120px; margin-bottom: 15px; border-radius: 50%; border: 2px solid #d4af37; object-fit: cover; }
+    
+    label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; text-align: left; }
     input { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; font-size: 16px; }
     .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 20px; border-radius: 15px; text-align: center; margin: 15px 0; border: 2px solid #d4af37; }
-    .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
+    .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; text-align: left; }
     .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
     .addon-item input { width: 22px; height: 22px; margin-right: 10px; cursor: pointer; }
     button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
@@ -21,7 +25,10 @@
 <body>
 
 <div class="card">
-    <h2 style="text-align:center; color:#d4af37;">Fresh Cut Fields & McLees</h2>
+    <img src="YOUR_LOGO_URL_HERE" alt="Fresh Cut Fields & McLees Logo" class="logo">
+    
+    <h2 style="color:#d4af37; margin-top: 0;">Fresh Cut Fields & McLees</h2>
+    
     <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
         <label>Name</label>
         <input type="text" name="Name" required>
