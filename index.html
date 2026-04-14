@@ -28,7 +28,7 @@
 </div>
 
 <div class="card">
-    <form action="https://formspree.io/f/zeek193@hotmail.com" method="POST" id="mainForm">
+    <form action="https://formspree.io/f/mqewkjrv" method="POST" id="mainForm">
         <label>Name</label>
         <input type="text" name="Name" required placeholder="Name">
 
@@ -131,12 +131,11 @@ document.querySelectorAll(".addon").forEach(checkbox => {
     checkbox.onchange = update;  
 });  
 
-// Old School Submission logic
+// Native submission handling
 document.getElementById('mainForm').onsubmit = function() {  
     const btn = document.getElementById("submitBtn");  
     btn.disabled = true;  
-    btn.innerText = "Redirecting...";  
-    // We let the form submit naturally now.
+    btn.innerText = "Sending Quote...";  
     return true; 
 };  
 </script>  
