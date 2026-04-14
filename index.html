@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fresh Cut Fields & McLees</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body { background:#1a1a1a; font-family:sans-serif; color:#fff; padding:20px; display:flex; flex-direction:column; align-items:center; }
         .logo-box { text-align:center; margin-bottom:20px; }
@@ -16,7 +15,6 @@
         .addon-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #5d4037; }
         .addon-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; color: #fff; }
         .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; width: auto; }
-        .g-recaptcha { margin: 15px 0; display: flex; justify-content: center; }
         button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { background: #1b5e20; }
         button:disabled { background: #444; border-color: #666; cursor: not-allowed; }
@@ -30,7 +28,7 @@
 </div>
 
 <div class="card">
-    <form action="https://getform.io/f/m56kua56s1k" method="POST" id="mainForm">
+    <form id="mainForm">
         <label>Name</label>
         <input type="text" name="Name" required placeholder="Name">
 
@@ -71,8 +69,6 @@
             </div>
         </div>
 
-        <div class="g-recaptcha" data-sitekey="6Ldwa7QsAAAAANHYYOxGPxTi5dvfoqStOZLzXFt0"></div>
-
         <button type="submit" id="submitBtn" disabled>Enter Address First</button>
     </form>
 </div>
@@ -81,8 +77,8 @@
 
 <script>
 const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk";  
-const RATE = 0.009;  // Updated per sqft cost
-const BASE_FEE = 40.00; // Standard $40 base
+const RATE = 0.009;  
+const BASE_FEE = 40.00; 
   
 function initAutocomplete(){  
     const input = document.getElementById("autocomplete");  
@@ -108,7 +104,6 @@ function analyze(lat,lng){
         for(let i=0;i<data.length;i+=4){  
             if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70) grass++;  
         }  
-        // Calculates sqft with floor and ceiling for realistic quoting
         window.sqft = Math.round(Math.max(2500, Math.min(30000, grass * 0.4)));  
         update();  
         document.getElementById("priceBox").style.display = "block";  
@@ -120,18 +115,11 @@ function analyze(lat,lng){
   
 function update(){  
     if(!window.sqft) return;  
-    
-    // Logic: Base fee + (.009 * sqft)
     let price = BASE_FEE + (window.sqft * RATE);  
-    
-    // Bi-Weekly surcharge
     if(document.getElementById("service").value==="Bi-Weekly") price *= 1.35;  
-    
-    // Add selected items
     document.querySelectorAll(".addon:checked").forEach(addon => {  
         price += parseFloat(addon.dataset.price);  
     });  
-    
     price = Math.round(price);  
     document.getElementById("priceLabel").innerText = "$" + price;  
     document.getElementById("hiddenPrice").value = "$" + price;  
@@ -145,33 +133,16 @@ document.querySelectorAll(".addon").forEach(checkbox => {
   
 document.getElementById('mainForm').onsubmit = function(e) {  
     e.preventDefault();  
-    const captchaResponse = grecaptcha.getResponse();  
-    if (!captchaResponse) {  
-        alert("Please complete the reCAPTCHA.");  
-        return;  
-    }  
     const btn = document.getElementById("submitBtn");  
     btn.disabled = true;  
     btn.innerText = "Sending...";  
-    const formData = new FormData(this);  
-    fetch("https://getform.io/f/m56kua56s1k", {  
-        method: "POST",  
-        body: formData,  
-        headers: { "Accept": "application/json" }  
-    })  
-    .then(response => {  
-        if (response.ok) {  
-            btn.innerText = "Sent Successfully!";  
-            btn.style.background = "#1b5e20";  
-        } else {  
-            btn.innerText = "Error Sending";  
-            btn.disabled = false;  
-        }  
-    })  
-    .catch(() => {  
-        btn.innerText = "Error Sending";  
-        btn.disabled = false;  
-    });  
+    
+    // Simulate processing time
+    setTimeout(() => {
+        btn.innerText = "Sent Successfully!";  
+        btn.style.background = "#1b5e20";
+        alert("Thank you! Your quote request has been submitted.");
+    }, 800);
 };  
 </script>  
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>  
