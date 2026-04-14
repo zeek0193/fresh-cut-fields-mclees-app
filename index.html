@@ -101,25 +101,28 @@ function analyze(lat,lng){
         ctx.drawImage(img,0,0);  
         const data = ctx.getImageData(0,0,300,300).data;  
         
-        let grassPixels=0;  
+        let grassPixels = 0;  
         for(let i=0; i<data.length; i+=4){  
             const r = data[i], g = data[i+1], b = data[i+2];
-            // STRICTER FILTER: Grass must be bright green, significantly outperforming red/blue
-            // This ignores rooftops, shadows, and most trees.
-            if(g > r * 1.35 && g > b * 1.2 && g > 70) {
+            // Balanced Filter: Green just needs to be the dominant color.
+            // This captures all shades of grass while excluding pavement/dark roofs.
+            if(g > r && g > b) {
                 grassPixels++;  
             }
         }  
         
-        // CALIBRATED MULTIPLIER: Tuned for Zoom 18 to match ~43,900 sqft lots
-        window.sqft = Math.round(grassPixels * 1.9);
+        // CALIBRATION for Zoom 18:
+        // A full 300x300 image at zoom 18 is ~625,000 total sqft.
+        // We calculate (Pixels / 90,000 total pixels) * Area seen by zoom 18
+        // For Reinmiller, we are aiming for roughly 44,000 sqft.
+        window.sqft = Math.round(grassPixels * 6.8);
         
-        if (window.sqft < 1500) window.sqft = 1500;
-        if (window.sqft > 150000) window.sqft = 150000; 
+        // Minimum cap for small city lots
+        if (window.sqft < 2500) window.sqft = 2500;
 
         update();  
         document.getElementById("priceBox").style.display = "block";  
-        document.getElementById("sqftDisplay").innerText = "Estimated Area: " + window.sqft.toLocaleString() + " sqft";
+        document.getElementById("sqftDisplay").innerText = "Estimated Mowable Area: " + window.sqft.toLocaleString() + " sqft";
         document.getElementById("submitBtn").disabled = false;  
         document.getElementById("submitBtn").innerText = "Submit Quote Request";  
     };  
@@ -127,16 +130,13 @@ function analyze(lat,lng){
   
 function update(){  
     if(!window.sqft) return;  
-    
     let total = BASE_FEE + (window.sqft * RATE);  
-    
     if(document.getElementById("service").value === "Bi-Weekly") total *= 1.35;  
-    
     document.querySelectorAll(".addon:checked").forEach(addon => {  
         total += parseFloat(addon.dataset.price);  
     });  
     
-    // Nearest $5 rounding for a professional appearance
+    // Round to nearest $5
     let finalPrice = Math.ceil(total / 5) * 5;  
     
     document.getElementById("priceLabel").innerText = "$" + finalPrice;  
