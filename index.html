@@ -28,7 +28,7 @@
 </div>
 
 <div class="card">
-    <form id="mainForm">
+    <form action="https://formspree.io/f/zeek193@hotmail.com" method="POST" id="mainForm">
         <label>Name</label>
         <input type="text" name="Name" required placeholder="Name">
 
@@ -130,19 +130,35 @@ document.getElementById("service").onchange = update;
 document.querySelectorAll(".addon").forEach(checkbox => {  
     checkbox.onchange = update;  
 });  
-  
+
+// Form Submission Logic
 document.getElementById('mainForm').onsubmit = function(e) {  
     e.preventDefault();  
     const btn = document.getElementById("submitBtn");  
     btn.disabled = true;  
     btn.innerText = "Sending...";  
     
-    // Simulate processing time
-    setTimeout(() => {
-        btn.innerText = "Sent Successfully!";  
-        btn.style.background = "#1b5e20";
-        alert("Thank you! Your quote request has been submitted.");
-    }, 800);
+    const formData = new FormData(this);  
+    
+    fetch("https://formspree.io/f/zeek193@hotmail.com", {  
+        method: "POST",  
+        body: formData,  
+        headers: { "Accept": "application/json" }  
+    })  
+    .then(response => {  
+        if (response.ok) {  
+            btn.innerText = "Sent Successfully!";  
+            btn.style.background = "#1b5e20";  
+            alert("Thank you! Your quote has been sent to zeek193@hotmail.com.");
+        } else {  
+            btn.innerText = "Error Sending";  
+            btn.disabled = false;  
+        }  
+    })  
+    .catch(() => {  
+        btn.innerText = "Error Sending";  
+        btn.disabled = false;  
+    });  
 };  
 </script>  
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>  
