@@ -94,31 +94,32 @@ function initAutocomplete(){
 function analyze(lat,lng){  
     const img = new Image();  
     img.crossOrigin="Anonymous";  
-    img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=18&size=300x300&maptype=satellite&key=${API_KEY}`;  
+    img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=19&size=300x300&maptype=satellite&key=${API_KEY}`;  
     img.onload = ()=>{  
         const canvas = document.getElementById("canvas");  
         const ctx = canvas.getContext("2d");  
         ctx.drawImage(img,0,0);  
         const data = ctx.getImageData(0,0,300,300).data;  
         
-        let grassPixels = 0;  
+        let grassCount = 0;  
         for(let i=0; i<data.length; i+=4){  
             const r = data[i], g = data[i+1], b = data[i+2];
-            // Balanced Filter: Green just needs to be the dominant color.
-            // This captures all shades of grass while excluding pavement/dark roofs.
-            if(g > r && g > b) {
-                grassPixels++;  
-            }
+            // Refined Joplin grass detection
+            if(g > r * 1.15 && g > b * 1.1 && g > 65) grassCount++;  
         }  
+
+        // HYBRID MATH FOR ZOOM 19:
+        // Total area in a 300x300 frame at zoom 19 is approx 155,000 sqft.
+        // We find the % of the frame that is grass and multiply by that area.
+        const totalPixels = 90000;
+        const grassRatio = grassCount / totalPixels;
+        const frameArea = 155000; 
         
-        // CALIBRATION for Zoom 18:
-        // A full 300x300 image at zoom 18 is ~625,000 total sqft.
-        // We calculate (Pixels / 90,000 total pixels) * Area seen by zoom 18
-        // For Reinmiller, we are aiming for roughly 44,000 sqft.
-        window.sqft = Math.round(grassPixels * 6.8);
-        
-        // Minimum cap for small city lots
-        if (window.sqft < 2500) window.sqft = 2500;
+        window.sqft = Math.round(frameArea * grassRatio);
+
+        // Cap to ensure it stays within a reasonable 1.5-acre limit for auto-quotes
+        if (window.sqft < 2000) window.sqft = 2500;
+        if (window.sqft > 65000) window.sqft = 65000;
 
         update();  
         document.getElementById("priceBox").style.display = "block";  
@@ -130,13 +131,14 @@ function analyze(lat,lng){
   
 function update(){  
     if(!window.sqft) return;  
+    
     let total = BASE_FEE + (window.sqft * RATE);  
     if(document.getElementById("service").value === "Bi-Weekly") total *= 1.35;  
+    
     document.querySelectorAll(".addon:checked").forEach(addon => {  
         total += parseFloat(addon.dataset.price);  
     });  
     
-    // Round to nearest $5
     let finalPrice = Math.ceil(total / 5) * 5;  
     
     document.getElementById("priceLabel").innerText = "$" + finalPrice;  
