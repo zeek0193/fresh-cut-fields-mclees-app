@@ -17,6 +17,7 @@
         .addon-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #fff; }
         .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; width: auto; }
         button { width:100%; padding:18px; margin-top:15px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
+        .btn-clear { background: #5d4037; font-size: 12px; padding: 10px; margin-top: 5px; border: 1px solid #d4af37; }
         .instructions { font-size: 13px; color: #d4af37; margin-bottom: 10px; text-align: center; font-style: italic; }
         .trap { display: none !important; }
     </style>
@@ -35,6 +36,7 @@
         <div id="map-container">
             <div id="map"></div>
             <p id="map-msg" class="instructions" style="display:none;">Click the corners of your lawn to outline the area you want mowed.</p>
+            <button type="button" id="clearMap" class="btn-clear" style="display:none;">Reset Drawing</button>
         </div>
 
         <div id="priceBox" class="price-box">
@@ -78,7 +80,8 @@
 
 <script>
 let map, drawingManager, selectedShape;
-const RATE = 0.007; // Lowered from 0.009
+// RATE ADJUSTED TO $0.001 to reach ~$80 for 40k sqft
+const RATE = 0.001; 
 const BASE_FEE = 40.00;
 
 function initMap() {
@@ -98,6 +101,7 @@ function initMap() {
 
         document.getElementById("map").style.display = "block";
         document.getElementById("map-msg").style.display = "block";
+        document.getElementById("clearMap").style.display = "block";
         
         map.setCenter(place.geometry.location);
         map.setZoom(19); 
@@ -150,17 +154,15 @@ function calculateArea(polygon) {
 function updatePrice() {
     if (!window.sqft) return;
 
-    // Calculation: Base + (Sqft * Lower Rate)
     let total = BASE_FEE + (window.sqft * RATE);
     
-    // Frequency Multiplier
     if (document.getElementById("service").value === "Bi-Weekly") total *= 1.35;
     
-    // Restoration of Add-Ons logic
     document.querySelectorAll(".addon:checked").forEach(addon => {
         total += parseFloat(addon.dataset.price);
     });
 
+    // Rounding to nearest $5
     let finalPrice = Math.ceil(total / 5) * 5;
 
     document.getElementById("priceLabel").innerText = "$" + finalPrice;
@@ -170,7 +172,16 @@ function updatePrice() {
     document.getElementById("submitBtn").innerText = "Submit Quote Request";
 }
 
-// Event listeners for price updates
+document.getElementById("clearMap").onclick = function() {
+    if (selectedShape) {
+        selectedShape.setMap(null);
+        selectedShape = null;
+        window.sqft = 0;
+        document.getElementById("priceBox").style.display = "none";
+        document.getElementById("submitBtn").innerText = "Draw Lawn to Get Quote";
+    }
+};
+
 document.getElementById("service").onchange = updatePrice;
 document.querySelectorAll(".addon").forEach(checkbox => {
     checkbox.onchange = updatePrice;
