@@ -94,25 +94,28 @@ function initAutocomplete(){
 function analyze(lat,lng){  
     const img = new Image();  
     img.crossOrigin="Anonymous";  
-    // Zoom 18 is used to capture large 1-acre properties like Reinmiller Rd
     img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=18&size=300x300&maptype=satellite&key=${API_KEY}`;  
     img.onload = ()=>{  
         const canvas = document.getElementById("canvas");  
         const ctx = canvas.getContext("2d");  
         ctx.drawImage(img,0,0);  
         const data = ctx.getImageData(0,0,300,300).data;  
+        
         let grassPixels=0;  
-        for(let i=0;i<data.length;i+=4){  
+        for(let i=0; i<data.length; i+=4){  
             const r = data[i], g = data[i+1], b = data[i+2];
-            // Missouri Grass Detection Logic
-            if(g > r * 1.1 && g > b && g > 50) grassPixels++;  
+            // STRICTER FILTER: Grass must be bright green, significantly outperforming red/blue
+            // This ignores rooftops, shadows, and most trees.
+            if(g > r * 1.35 && g > b * 1.2 && g > 70) {
+                grassPixels++;  
+            }
         }  
         
-        // Multiplier for Zoom 18 (Adjusted for ~43k sqft accuracy)
-        window.sqft = Math.round(grassPixels * 12.8);
+        // CALIBRATED MULTIPLIER: Tuned for Zoom 18 to match ~43,900 sqft lots
+        window.sqft = Math.round(grassPixels * 1.9);
         
-        // Floor cap for safety
         if (window.sqft < 1500) window.sqft = 1500;
+        if (window.sqft > 150000) window.sqft = 150000; 
 
         update();  
         document.getElementById("priceBox").style.display = "block";  
@@ -125,16 +128,15 @@ function analyze(lat,lng){
 function update(){  
     if(!window.sqft) return;  
     
-    // Core Price Logic
     let total = BASE_FEE + (window.sqft * RATE);  
     
-    if(document.getElementById("service").value==="Bi-Weekly") total *= 1.35;  
+    if(document.getElementById("service").value === "Bi-Weekly") total *= 1.35;  
     
     document.querySelectorAll(".addon:checked").forEach(addon => {  
         total += parseFloat(addon.dataset.price);  
     });  
     
-    // Rounding to nearest $5 for professional look
+    // Nearest $5 rounding for a professional appearance
     let finalPrice = Math.ceil(total / 5) * 5;  
     
     document.getElementById("priceLabel").innerText = "$" + finalPrice;  
