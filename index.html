@@ -9,14 +9,22 @@
         .logo-box { text-align:center; margin-bottom:20px; }
         .logo-box img { width:300px; max-width:100%; border-radius:12px; border:2px solid #d4af37; }
         .card { background:#2b1d0e; padding:20px; border-radius:20px; border:3px solid #5d4037; max-width:600px; width:100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        #map { width: 100%; height: 400px; border-radius: 12px; margin: 15px 0; border: 2px solid #d4af37; display: none; }
+        
+        /* Map and Instructions */
+        #instruction-box { display:none; background: rgba(212, 175, 55, 0.1); border: 1px dashed #d4af37; padding: 15px; border-radius: 12px; margin: 15px 0; text-align: center; }
+        #map { width: 100%; height: 400px; border-radius: 12px; margin: 10px 0; border: 2px solid #d4af37; display: none; }
+        
         label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
         input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; background: #fff; color: #000; }
+        
         .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 15px; border-radius: 15px; text-align: center; margin: 15px 0; border: 2px solid #d4af37; display: none; }
         .addon-section { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-top: 10px; border: 1px solid #5d4037; }
         .addon-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #fff; }
         .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; width: auto; }
-        button { width:100%; padding:18px; margin-top:15px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
+        
+        button { width:100%; padding:18px; margin-top:15px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #388e3c; }
+        
         .disclaimer { font-size: 11px; color: #a1887f; margin-top: 20px; text-align: center; line-height: 1.4; border-top: 1px solid #5d4037; padding-top: 15px; }
         .trap { display: none !important; }
     </style>
@@ -29,17 +37,25 @@
 
 <div class="card">
     <form action="https://formspree.io/f/mqewkjrv" method="POST" id="mainForm">
+        
         <label>Step 1: Enter Address</label>
-        <input type="text" id="autocomplete" name="Address" required placeholder="Type your address here...">
+        <input type="text" id="autocomplete" name="Address" required placeholder="Start typing your address...">
+
+        <div id="instruction-box">
+            <p style="margin: 0; color: #d4af37; font-size: 14px; font-weight: bold; text-transform: uppercase;">📍 Draw Your Lawn</p>
+            <p style="margin: 5px 0 0 0; font-size: 13px; line-height: 1.4; color: #eee;">
+                Tap each corner of your property to outline the area you want mowed. Connect the last point to the first to calculate your price.
+            </p>
+        </div>
 
         <div id="map-container">
             <div id="map"></div>
-            <p id="map-msg" style="display:none; text-align:center; font-size:13px; color:#d4af37; font-style:italic; margin-top:10px;">Click the corners of your lawn to outline the area you want mowed.</p>
         </div>
 
         <div id="priceBox" class="price-box">
-            <h2 id="priceLabel" style="font-size: 40px; margin: 5px 0;">$--</h2>
-            <p id="sqftDisplay" style="margin:0; font-size:12px;">Area: 0 sqft</p>
+            <p style="margin:0; font-size:12px; color: #c8e6c9; text-transform: uppercase; font-weight: bold;">Estimated Quote</p>
+            <h2 id="priceLabel" style="font-size: 44px; margin: 5px 0;">$--</h2>
+            <p id="sqftDisplay" style="margin:0; font-size:13px; opacity: 0.9;">Area: 0 sqft</p>
             <input type="hidden" name="Quote_Total" id="hiddenPrice">
             <input type="hidden" name="Lawn_Sqft" id="hiddenSqft">
         </div>
@@ -67,12 +83,12 @@
         </div>
 
         <label>Contact Details</label>
-        <input type="text" name="Name" required placeholder="Name">
+        <input type="text" name="Name" required placeholder="Your Name">
         <input type="tel" name="Phone" required placeholder="Phone Number">
 
         <input type="text" name="_gotcha" class="trap" tabindex="-1">
 
-        <button type="submit" id="submitBtn">Draw Lawn to Get Quote</button>
+        <button type="submit" id="submitBtn">Outline Lawn to Get Quote</button>
 
         <div class="disclaimer">
             *This is an estimated price based on user-provided area data. Final pricing is subject to change and may go up or down upon professional site inspection.
@@ -82,7 +98,7 @@
 
 <script>
 let map, drawingManager, selectedShape;
-const RATE = 0.00085; // Adjusted to target ~$80 for 47k sqft
+const RATE = 0.00085; // ~$80 for 47k sqft
 const BASE_FEE = 40.00;
 
 function initMap() {
@@ -90,7 +106,8 @@ function initMap() {
         center: { lat: 37.0842, lng: -94.5133 },
         zoom: 12,
         mapTypeId: "satellite",
-        tilt: 0
+        tilt: 0,
+        gestureHandling: "greedy" // Makes mobile navigation easier
     });
 
     const input = document.getElementById("autocomplete");
@@ -99,11 +116,17 @@ function initMap() {
     auto.addListener("place_changed", () => {
         const place = auto.getPlace();
         if (!place.geometry) return;
+        
+        // Reveal Map and Instructions
         document.getElementById("map").style.display = "block";
-        document.getElementById("map-msg").style.display = "block";
+        document.getElementById("instruction-box").style.display = "block";
+        
         map.setCenter(place.geometry.location);
         map.setZoom(19); 
         setupDrawing();
+        
+        // Scroll slightly to the map so the user sees it
+        document.getElementById("map").scrollIntoView({ behavior: 'smooth' });
     });
 }
 
@@ -119,17 +142,21 @@ function setupDrawing() {
         polygonOptions: {
             fillColor: "#2d5a27",
             fillOpacity: 0.5,
-            strokeWeight: 2,
+            strokeWeight: 3,
             strokeColor: "#d4af37",
             editable: true,
-            draggable: true
+            draggable: true,
+            clickable: true
         }
     });
     drawingManager.setMap(map);
+    
     google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
         if (selectedShape) selectedShape.setMap(null); 
         selectedShape = event.overlay;
         calculateArea(selectedShape);
+        
+        // Recalculate if user moves points
         google.maps.event.addListener(selectedShape.getPath(), 'set_at', () => calculateArea(selectedShape));
         google.maps.event.addListener(selectedShape.getPath(), 'insert_at', () => calculateArea(selectedShape));
     });
@@ -139,31 +166,46 @@ function calculateArea(polygon) {
     const areaSqMeters = google.maps.geometry.spherical.computeArea(polygon.getPath());
     const areaSqFt = areaSqMeters * 10.7639;
     window.sqft = Math.round(areaSqFt);
+    
     document.getElementById("priceBox").style.display = "block";
     updatePrice();
 }
 
 function updatePrice() {
     if (!window.sqft) return;
+    
     let total = BASE_FEE + (window.sqft * RATE);
-    if (document.getElementById("service").value === "Bi-Weekly") total *= 1.35;
+    
+    // Frequency Multiplier
+    if (document.getElementById("service").value === "Bi-Weekly") {
+        total *= 1.35;
+    }
+    
+    // Add-ons
     document.querySelectorAll(".addon:checked").forEach(addon => {
         total += parseFloat(addon.dataset.price);
     });
-    let finalPrice = Math.round(total); // Rounding to nearest whole dollar
+    
+    let finalPrice = Math.round(total);
     document.getElementById("priceLabel").innerText = "$" + finalPrice;
     document.getElementById("sqftDisplay").innerText = "Calculated Area: " + window.sqft.toLocaleString() + " sqft";
+    
+    // Hidden fields for Formspree
     document.getElementById("hiddenPrice").value = "$" + finalPrice;
-    document.getElementById("hiddenSqft").value = window.sqft;
+    document.getElementById("hiddenSqft").value = window.sqft + " sqft";
+    
+    // Update Button Text
     document.getElementById("submitBtn").innerText = "Submit Quote Request";
 }
 
+// Event Listeners for price updates
 document.getElementById("service").onchange = updatePrice;
 document.querySelectorAll(".addon").forEach(checkbox => checkbox.onchange = updatePrice);
 
+// Prevent submission if no area is drawn
 document.getElementById('mainForm').onsubmit = function() {
     if (!window.sqft) {
-        alert("Please outline your lawn on the map first!");
+        alert("Please outline your lawn on the map first to generate a quote!");
         return false;
     }
     return true;
@@ -171,5 +213,6 @@ document.getElementById('mainForm').onsubmit = function() {
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places,drawing,geometry&callback=initMap"></script>
+
 </body>
 </html>
