@@ -13,7 +13,10 @@
         label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
         input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; background: #fff; color: #000; }
         .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 15px; border-radius: 15px; text-align: center; margin: 15px 0; border: 2px solid #d4af37; display: none; }
-        button { width:100%; padding:18px; margin-top:10px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
+        .addon-section { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-top: 10px; border: 1px solid #5d4037; }
+        .addon-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #fff; }
+        .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; width: auto; }
+        button { width:100%; padding:18px; margin-top:15px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; }
         .instructions { font-size: 13px; color: #d4af37; margin-bottom: 10px; text-align: center; font-style: italic; }
         .trap { display: none !important; }
     </style>
@@ -47,25 +50,40 @@
             <option value="Bi-Weekly">Bi-Weekly (+35%)</option>
         </select>
 
-        <label>Your Name & Phone</label>
+        <label>Add-Ons</label>
+        <div class="addon-section">
+            <div class="addon-item">
+                <input type="checkbox" class="addon" name="Limb_Pickup" data-price="30">
+                <span>Limb Pickup (+$30)</span>
+            </div>
+            <div class="addon-item">
+                <input type="checkbox" class="addon" name="Flea_Tick" data-price="25">
+                <span>Flea & Tick (+$25)</span>
+            </div>
+            <div class="addon-item">
+                <input type="checkbox" class="addon" name="Bug_Spray" data-price="20">
+                <span>Bug Spray (+$20)</span>
+            </div>
+        </div>
+
+        <label>Your Contact Info</label>
         <input type="text" name="Name" required placeholder="Name">
         <input type="tel" name="Phone" required placeholder="Phone Number">
 
         <input type="text" name="_gotcha" class="trap" tabindex="-1">
 
-        <button type="submit" id="submitBtn">Get Quote First</button>
+        <button type="submit" id="submitBtn">Draw Lawn to Get Quote</button>
     </form>
 </div>
 
 <script>
 let map, drawingManager, selectedShape;
-const RATE = 0.009;
+const RATE = 0.007; // Lowered from 0.009
 const BASE_FEE = 40.00;
 
 function initMap() {
-    // Initial map setup
     map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 37.0842, lng: -94.5133 }, // Default to Joplin
+        center: { lat: 37.0842, lng: -94.5133 },
         zoom: 12,
         mapTypeId: "satellite",
         tilt: 0
@@ -82,14 +100,14 @@ function initMap() {
         document.getElementById("map-msg").style.display = "block";
         
         map.setCenter(place.geometry.location);
-        map.setZoom(20); // Zoom in tight on the property
+        map.setZoom(19); 
         
         setupDrawing();
     });
 }
 
 function setupDrawing() {
-    if (drawingManager) return; // Only init once
+    if (drawingManager) return;
 
     drawingManager = new google.maps.drawing.DrawingManager({
         drawingMode: google.maps.drawing.OverlayType.POLYGON,
@@ -111,11 +129,10 @@ function setupDrawing() {
     drawingManager.setMap(map);
 
     google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
-        if (selectedShape) selectedShape.setMap(null); // Clear old shape
+        if (selectedShape) selectedShape.setMap(null); 
         selectedShape = event.overlay;
         calculateArea(selectedShape);
 
-        // Update if user edits the shape
         google.maps.event.addListener(selectedShape.getPath(), 'set_at', () => calculateArea(selectedShape));
         google.maps.event.addListener(selectedShape.getPath(), 'insert_at', () => calculateArea(selectedShape));
     });
@@ -123,7 +140,7 @@ function setupDrawing() {
 
 function calculateArea(polygon) {
     const areaSqMeters = google.maps.geometry.spherical.computeArea(polygon.getPath());
-    const areaSqFt = areaSqMeters * 10.7639; // Convert to sqft
+    const areaSqFt = areaSqMeters * 10.7639;
     window.sqft = Math.round(areaSqFt);
 
     document.getElementById("priceBox").style.display = "block";
@@ -133,9 +150,17 @@ function calculateArea(polygon) {
 function updatePrice() {
     if (!window.sqft) return;
 
+    // Calculation: Base + (Sqft * Lower Rate)
     let total = BASE_FEE + (window.sqft * RATE);
+    
+    // Frequency Multiplier
     if (document.getElementById("service").value === "Bi-Weekly") total *= 1.35;
     
+    // Restoration of Add-Ons logic
+    document.querySelectorAll(".addon:checked").forEach(addon => {
+        total += parseFloat(addon.dataset.price);
+    });
+
     let finalPrice = Math.ceil(total / 5) * 5;
 
     document.getElementById("priceLabel").innerText = "$" + finalPrice;
@@ -145,7 +170,11 @@ function updatePrice() {
     document.getElementById("submitBtn").innerText = "Submit Quote Request";
 }
 
+// Event listeners for price updates
 document.getElementById("service").onchange = updatePrice;
+document.querySelectorAll(".addon").forEach(checkbox => {
+    checkbox.onchange = updatePrice;
+});
 
 document.getElementById('mainForm').onsubmit = function() {
     if (!window.sqft) {
