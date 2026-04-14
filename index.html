@@ -131,34 +131,13 @@ document.querySelectorAll(".addon").forEach(checkbox => {
     checkbox.onchange = update;  
 });  
 
-// Form Submission Logic
-document.getElementById('mainForm').onsubmit = function(e) {  
-    e.preventDefault();  
+// Old School Submission logic
+document.getElementById('mainForm').onsubmit = function() {  
     const btn = document.getElementById("submitBtn");  
     btn.disabled = true;  
-    btn.innerText = "Sending...";  
-    
-    const formData = new FormData(this);  
-    
-    fetch("https://formspree.io/f/zeek193@hotmail.com", {  
-        method: "POST",  
-        body: formData,  
-        headers: { "Accept": "application/json" }  
-    })  
-    .then(response => {  
-        if (response.ok) {  
-            btn.innerText = "Sent Successfully!";  
-            btn.style.background = "#1b5e20";  
-            alert("Thank you! Your quote has been sent to zeek193@hotmail.com.");
-        } else {  
-            btn.innerText = "Error Sending";  
-            btn.disabled = false;  
-        }  
-    })  
-    .catch(() => {  
-        btn.innerText = "Error Sending";  
-        btn.disabled = false;  
-    });  
+    btn.innerText = "Redirecting...";  
+    // We let the form submit naturally now.
+    return true; 
 };  
 </script>  
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk&libraries=places&callback=initAutocomplete"></script>  
