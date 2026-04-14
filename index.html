@@ -79,7 +79,7 @@
 const API_KEY = "AIzaSyD794oDQ9Y2KHDJJct4wfyPT478Sqf2eQk";  
 const RATE = 0.009;  
 const BASE_FEE = 40.00; 
-  
+
 function initAutocomplete(){  
     const input = document.getElementById("autocomplete");  
     const auto = new google.maps.places.Autocomplete(input);  
@@ -94,17 +94,26 @@ function initAutocomplete(){
 function analyze(lat,lng){  
     const img = new Image();  
     img.crossOrigin="Anonymous";  
-    img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=20&size=300x300&maptype=satellite&key=${API_KEY}`;  
+    // Zoom 18 is used to capture large 1-acre properties like Reinmiller Rd
+    img.src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}&zoom=18&size=300x300&maptype=satellite&key=${API_KEY}`;  
     img.onload = ()=>{  
         const canvas = document.getElementById("canvas");  
         const ctx = canvas.getContext("2d");  
         ctx.drawImage(img,0,0);  
         const data = ctx.getImageData(0,0,300,300).data;  
-        let grass=0;  
+        let grassPixels=0;  
         for(let i=0;i<data.length;i+=4){  
-            if(data[i+1] > data[i] * 1.15 && data[i+1] > data[i+2] * 1.15 && data[i+1] > 70) grass++;  
+            const r = data[i], g = data[i+1], b = data[i+2];
+            // Missouri Grass Detection Logic
+            if(g > r * 1.1 && g > b && g > 50) grassPixels++;  
         }  
-        window.sqft = Math.round(Math.max(2500, Math.min(30000, grass * 0.4)));  
+        
+        // Multiplier for Zoom 18 (Adjusted for ~43k sqft accuracy)
+        window.sqft = Math.round(grassPixels * 12.8);
+        
+        // Floor cap for safety
+        if (window.sqft < 1500) window.sqft = 1500;
+
         update();  
         document.getElementById("priceBox").style.display = "block";  
         document.getElementById("sqftDisplay").innerText = "Estimated Area: " + window.sqft.toLocaleString() + " sqft";
@@ -115,14 +124,21 @@ function analyze(lat,lng){
   
 function update(){  
     if(!window.sqft) return;  
-    let price = BASE_FEE + (window.sqft * RATE);  
-    if(document.getElementById("service").value==="Bi-Weekly") price *= 1.35;  
+    
+    // Core Price Logic
+    let total = BASE_FEE + (window.sqft * RATE);  
+    
+    if(document.getElementById("service").value==="Bi-Weekly") total *= 1.35;  
+    
     document.querySelectorAll(".addon:checked").forEach(addon => {  
-        price += parseFloat(addon.dataset.price);  
+        total += parseFloat(addon.dataset.price);  
     });  
-    price = Math.round(price);  
-    document.getElementById("priceLabel").innerText = "$" + price;  
-    document.getElementById("hiddenPrice").value = "$" + price;  
+    
+    // Rounding to nearest $5 for professional look
+    let finalPrice = Math.ceil(total / 5) * 5;  
+    
+    document.getElementById("priceLabel").innerText = "$" + finalPrice;  
+    document.getElementById("hiddenPrice").value = "$" + finalPrice;  
     document.getElementById("hiddenSqft").value = window.sqft;  
 }  
   
@@ -131,7 +147,6 @@ document.querySelectorAll(".addon").forEach(checkbox => {
     checkbox.onchange = update;  
 });  
 
-// Native submission handling
 document.getElementById('mainForm').onsubmit = function() {  
     const btn = document.getElementById("submitBtn");  
     btn.disabled = true;  
