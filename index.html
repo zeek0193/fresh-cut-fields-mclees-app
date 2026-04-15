@@ -190,10 +190,11 @@ function updatePrice() {
     document.getElementById("submitBtn").innerText = "Submit Quote Request";
 }
 
+// Logic for frequency selection and value alert
 document.getElementById("service").onchange = function() {
     const frequency = this.value;
     if (frequency === "Weekly" || frequency === "Bi-Weekly") {
-        alert("Note: Our " + frequency + " service offers our best rates and requires a minimum commitment of 5 mows to maintain this pricing.");
+        alert("Note: Our " + frequency + " service offers our best value! These rates require a minimum commitment of 5 mows.");
     }
     updatePrice();
 };
