@@ -11,8 +11,13 @@
         .card { background:#2b1d0e; padding:20px; border-radius:20px; border:3px solid #5d4037; max-width:600px; width:100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
         #instruction-box { display:none; background: rgba(212, 175, 55, 0.1); border: 1px dashed #d4af37; padding: 15px; border-radius: 12px; margin: 15px 0; text-align: center; }
-        #map { width: 100%; height: 400px; border-radius: 12px; margin: 10px 0; border: 2px solid #d4af37; display: none; }
+        #map { width: 100%; height: 400px; border-radius: 12px; margin: 10px 0 5px 0; border: 2px solid #d4af37; display: none; }
         
+        /* Reset Button Styling */
+        .reset-container { display: none; text-align: right; margin-bottom: 10px; }
+        .reset-btn { background: #5d4037; color: #fff; border: 1px solid #d4af37; padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .reset-btn:hover { background: #795548; }
+
         label { margin-top:12px; display:block; color:#d4af37; font-size:12px; font-weight: bold; text-transform: uppercase; }
         .label-flex { display: flex; justify-content: space-between; align-items: baseline; }
         .label-subtext { font-size: 10px; color: #a1887f; text-transform: none; font-weight: normal; }
@@ -20,12 +25,16 @@
         input, select { width:100%; padding:12px; margin-top:5px; border-radius:8px; border:none; box-sizing: border-box; background: #fff; color: #000; }
         
         .price-box { background: linear-gradient(180deg, #1b5e20, #2d5a27); padding: 15px; border-radius: 15px; text-align: center; margin: 15px 0; border: 2px solid #d4af37; display: none; }
+        
+        /* Professional Notice Banner */
+        #promo-notice { display: none; background: rgba(200, 230, 201, 0.1); border: 1px solid #2d5a27; color: #c8e6c9; padding: 12px; border-radius: 8px; font-size: 13px; margin: 10px 0; text-align: center; line-height: 1.4; }
+
         .addon-section { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-top: 10px; border: 1px solid #5d4037; }
         .addon-item { display: flex; align-items: center; margin-bottom: 10px; font-size: 14px; color: #fff; }
         .addon-item input { width: 22px; height: 22px; margin-right: 12px; cursor: pointer; width: auto; }
         
-        button { width:100%; padding:18px; margin-top:15px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #388e3c; }
+        button#submitBtn { width:100%; padding:18px; margin-top:15px; background:#2d5a27; color:#fff; border: 2px solid #d4af37; border-radius:12px; font-size:18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button#submitBtn:hover { background: #388e3c; }
         
         .disclaimer { font-size: 11px; color: #a1887f; margin-top: 20px; text-align: center; line-height: 1.4; border-top: 1px solid #5d4037; padding-top: 15px; }
         .trap { display: none !important; }
@@ -46,12 +55,15 @@
         <div id="instruction-box">
             <p style="margin: 0; color: #d4af37; font-size: 14px; font-weight: bold; text-transform: uppercase;">📍 Draw Your Lawn</p>
             <p style="margin: 5px 0 0 0; font-size: 13px; line-height: 1.4; color: #eee;">
-                Tap each corner of your property to outline the area you want mowed. Connect the last point to the first to calculate your price.
+                Tap each corner of your property to outline the area. Connect the last point to the first to calculate your price.
             </p>
         </div>
 
         <div id="map-container">
             <div id="map"></div>
+            <div class="reset-container" id="resetContainer">
+                <button type="button" id="resetBtn" class="reset-btn">↺ Clear & Redraw</button>
+            </div>
         </div>
 
         <div id="priceBox" class="price-box">
@@ -68,6 +80,10 @@
             <option value="Bi-Weekly">Bi-Weekly (+25%)</option>
             <option value="One-Time">One-Time / On-Call (+35%)</option>
         </select>
+
+        <div id="promo-notice">
+            <strong>Service Note:</strong> Our recurring plans offer the best value and priority scheduling. These rates require a 5-mow minimum commitment.
+        </div>
 
         <div class="label-flex">
             <label>Add-Ons</label>
@@ -125,6 +141,7 @@ function initMap() {
         
         document.getElementById("map").style.display = "block";
         document.getElementById("instruction-box").style.display = "block";
+        document.getElementById("resetContainer").style.display = "block";
         
         map.setCenter(place.geometry.location);
         map.setZoom(19); 
@@ -137,11 +154,7 @@ function setupDrawing() {
     if (drawingManager) return;
     drawingManager = new google.maps.drawing.DrawingManager({
         drawingMode: google.maps.drawing.OverlayType.POLYGON,
-        drawingControl: true,
-        drawingControlOptions: {
-            position: google.maps.ControlPosition.TOP_CENTER,
-            drawingModes: [google.maps.drawing.OverlayType.POLYGON]
-        },
+        drawingControl: false, // Keep it clean, we control mode via script
         polygonOptions: {
             fillColor: "#2d5a27",
             fillOpacity: 0.5,
@@ -157,14 +170,11 @@ function setupDrawing() {
         if (selectedShape) selectedShape.setMap(null); 
         selectedShape = event.overlay;
         
-        // Calculate area and trigger the first price update
-        calculateArea(selectedShape);
+        // Disable drawing mode once finished so user can edit points
+        drawingManager.setDrawingMode(null);
         
-        // Trigger the "Best Value" pop-up immediately upon drawing completion
-        const freq = document.getElementById("service").value;
-        if (freq === "Weekly" || freq === "Bi-Weekly") {
-             alert("Note: Our " + freq + " service offers our best value! These rates require a minimum commitment of 5 mows.");
-        }
+        calculateArea(selectedShape);
+        toggleNotice(); 
 
         google.maps.event.addListener(selectedShape.getPath(), 'set_at', () => calculateArea(selectedShape));
         google.maps.event.addListener(selectedShape.getPath(), 'insert_at', () => calculateArea(selectedShape));
@@ -199,12 +209,33 @@ function updatePrice() {
     document.getElementById("submitBtn").innerText = "Submit Quote Request";
 }
 
-// Ensure the pop-up still works if they manually switch frequencies later
-document.getElementById("service").onchange = function() {
-    const frequency = this.value;
-    if (frequency === "Weekly" || frequency === "Bi-Weekly") {
-        alert("Note: Our " + frequency + " service offers our best value! These rates require a minimum commitment of 5 mows.");
+function toggleNotice() {
+    const frequency = document.getElementById("service").value;
+    const notice = document.getElementById("promo-notice");
+    // Only show notice if a shape has been drawn and it's a recurring service
+    if (window.sqft && (frequency === "Weekly" || frequency === "Bi-Weekly")) {
+        notice.style.display = "block";
+    } else {
+        notice.style.display = "none";
     }
+}
+
+// Reset Logic
+document.getElementById("resetBtn").onclick = function() {
+    if (selectedShape) {
+        selectedShape.setMap(null);
+        selectedShape = null;
+    }
+    window.sqft = 0;
+    document.getElementById("priceBox").style.display = "none";
+    document.getElementById("promo-notice").style.display = "none";
+    document.getElementById("submitBtn").innerText = "Outline Lawn to Get Quote";
+    // Re-enable drawing mode
+    drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+};
+
+document.getElementById("service").onchange = function() {
+    toggleNotice();
     updatePrice();
 };
 
