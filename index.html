@@ -156,7 +156,16 @@ function setupDrawing() {
     google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
         if (selectedShape) selectedShape.setMap(null); 
         selectedShape = event.overlay;
+        
+        // Calculate area and trigger the first price update
         calculateArea(selectedShape);
+        
+        // Trigger the "Best Value" pop-up immediately upon drawing completion
+        const freq = document.getElementById("service").value;
+        if (freq === "Weekly" || freq === "Bi-Weekly") {
+             alert("Note: Our " + freq + " service offers our best value! These rates require a minimum commitment of 5 mows.");
+        }
+
         google.maps.event.addListener(selectedShape.getPath(), 'set_at', () => calculateArea(selectedShape));
         google.maps.event.addListener(selectedShape.getPath(), 'insert_at', () => calculateArea(selectedShape));
     });
@@ -190,7 +199,7 @@ function updatePrice() {
     document.getElementById("submitBtn").innerText = "Submit Quote Request";
 }
 
-// Logic for frequency selection and value alert
+// Ensure the pop-up still works if they manually switch frequencies later
 document.getElementById("service").onchange = function() {
     const frequency = this.value;
     if (frequency === "Weekly" || frequency === "Bi-Weekly") {
